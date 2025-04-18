@@ -59,5 +59,12 @@ SkillSwap/
 └── data/             # JSON data storage
 ```
 
+## Author
+
+**Muhammed Bilal S**  
+Founder & Full Stack Developer  
+GitHub: [https://github.com/2003MBS](https://github.com/2003MBS)  
+LinkedIn: [www.linkedin.com/in/muhammed-bilal-s-61376a229](https://www.linkedin.com/in/muhammed-bilal-s-61376a229)
+
 ## Contributing
 Feel free to submit issues and enhancement requests.
