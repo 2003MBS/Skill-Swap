@@ -1,0 +1,27 @@
+[
+    {
+        "id": "5e0ab038-1e49-4816-92ff-e8cc13cc803e",
+        "title": "Web development ",
+        "date": "2025-03-24",
+        "time": "10:30",
+        "participant_id": "2",
+        "creator_id": "1",
+        "status": "completed",
+        "approval": "accepted",
+        "description": "",
+        "created_at": "2025-03-22T06:28:56.053328",
+        "completed_at": "2025-03-22T09:57:14.432788"
+    },
+    {
+        "id": "1a723c15-363c-4453-95ec-6cc18147d564",
+        "title": "web",
+        "date": "2025-03-24",
+        "time": "12:30",
+        "participant_id": "2",
+        "creator_id": "1",
+        "status": "scheduled",
+        "approval": "denied",
+        "description": "sdsvxvx",
+        "created_at": "2025-03-22T09:38:50.688809"
+    }
+]

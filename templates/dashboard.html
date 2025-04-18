@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{% block title %}Dashboard - SkillSwap{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="dashboard-nav">
+            <div class="nav-header">
+                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="SkillSwap Logo" class="dashboard-logo">
+                <h2>SkillSwap</h2>
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if active_page == 'home' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="{{ url_for('search') }}" class="nav-link {% if active_page == 'search' %}active{% endif %}">
+                    <i class="fas fa-search"></i>
+                    <span>Search</span>
+                </a>
+                <a href="{{ url_for('profile') }}" class="nav-link {% if active_page == 'profile' %}active{% endif %}">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="{{ url_for('messages') }}" class="nav-link {% if active_page == 'messages' %}active{% endif %}">
+                    <i class="fas fa-comments"></i>
+                    <span>Messages</span>
+                    <span class="unread-badge" id="unread-messages-badge" style="display: none;">0</span>
+                </a>
+                <a href="{{ url_for('connections') }}" class="nav-link {% if active_page == 'connections' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Connections</span>
+                    <span id="pending-connections-count" class="notification-badge" style="display: none;">0</span>
+                </a>
+            </div>
+            <div class="nav-footer">
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main">
+            <!-- Top Header -->
+
+            <!-- Dynamic Content Area -->
+            <div class="dashboard-content">
+                {% block content %}
+                <!-- Default Dashboard Home Content -->
+                <div class="content-section">
+                    <h2>Welcome, {{ session.get('user_name', 'User') }}!</h2>
+                    
+                    <!-- Other Users' Skills Section -->
+                    <div class="other-skills-section">
+                        <h3>Discover Skills</h3>
+                        <div class="skills-list">
+                            {% for skill in other_users_skills[:4] %}
+                            <div class="skill-card {% if skill.matches_interest %}matching-interest{% endif %}">
+                                <div class="skill-user">
+                                    <img src="{{ url_for('static', filename='images/default-avatar.png') if not skill.profile_picture or skill.profile_picture == 'default-avatar.png' else url_for('static', filename='uploads/profiles/' + skill.profile_picture) }}" alt="{{ skill.user_name }}">
+                                    <span>{{ skill.user_name }}</span>
+                                </div>
+                                <div class="skill-info">
+                                    <h4>{{ skill.skill_name }}</h4>
+                                    <span class="qualification-badge {{ skill.qualification.lower() }}">{{ skill.qualification }}</span>
+                                    <p class="skill-description">{{ skill.description }}</p>
+                                    <div class="skill-meta">
+                                        <span><i class="fas fa-clock"></i> {{ skill.years_of_experience }} years experience</span>
+                                        {% if skill.matches_interest %}
+                                        <span class="interest-match"><i class="fas fa-star"></i> Matches your interests</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="skill-actions">
+                                    <button class="view-details-btn" onclick="viewSkillDetails('{{ skill.user_id }}', '{{ skill.skill_name }}', '{{ skill.qualification }}', '{{ skill.years_of_experience }}', '{{ skill.description }}', '{{ skill.user_name }}', '{{ skill.profile_picture }}')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    {% if skill.is_connected %}
+                                    <button class="connected-btn" disabled>
+                                        <i class="fas fa-check"></i> Connected
+                                    </button>
+                                    {% else %}
+                                    <button class="connect-btn" onclick="connectWithUser('{{ skill.user_id }}')" data-user-id="{{ skill.user_id }}">
+                                        <i class="fas fa-user-plus"></i> Connect
+                                    </button>
+                                    {% endif %}
+                                    <button class="message-btn" onclick="startConversation('{{ skill.user_id }}')">
+                                        <i class="fas fa-comment"></i> Message
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Featured Users Section -->
+                        <div class="featured-users-section">
+                            <h3>Featured Users</h3>
+                            <div class="featured-users-cards">
+                                {% for user in featured_users %}
+                                <div class="featured-user-card">
+                                    <div class="user-avatar">
+                                        <img src="{{ url_for('static', filename='images/default-avatar.png') if not user.profile_picture or user.profile_picture == 'default-avatar.png' else url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="{{ user.name }}">
+                                    </div>
+                                    <div class="user-info">
+                                        <h4>{{ user.name }}</h4>
+                                        <p class="user-skills">{{ user.skills|join(', ') }}</p>
+                                        {% if user.is_connected %}
+                                        <button class="connected-btn" disabled>
+                                            <i class="fas fa-check"></i> Connected
+                                        </button>
+                                        {% else %}
+                                        <button class="connect-btn" onclick="connectWithUser('{{ user.id }}')" data-user-id="{{ user.id }}">
+                                            <i class="fas fa-user-plus"></i> Connect
+                                        </button>
+                                        {% endif %}
+                                        <button class="view-details-btn" onclick="viewUserDetails('{{ user.id }}')">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="skills-list">
+                            {% for skill in other_users_skills[4:] %}
+                            <div class="skill-card {% if skill.matches_interest %}matching-interest{% endif %}">
+                                <div class="skill-user">
+                                    <img src="{{ url_for('static', filename='images/default-avatar.png') if not skill.profile_picture or skill.profile_picture == 'default-avatar.png' else url_for('static', filename='uploads/profiles/' + skill.profile_picture) }}" alt="{{ skill.user_name }}">
+                                    <span>{{ skill.user_name }}</span>
+                                </div>
+                                <div class="skill-info">
+                                    <h4>{{ skill.skill_name }}</h4>
+                                    <span class="qualification-badge {{ skill.qualification.lower() }}">{{ skill.qualification }}</span>
+                                    <p class="skill-description">{{ skill.description }}</p>
+                                    <div class="skill-meta">
+                                        <span><i class="fas fa-clock"></i> {{ skill.years_of_experience }} years experience</span>
+                                        {% if skill.matches_interest %}
+                                        <span class="interest-match"><i class="fas fa-star"></i> Matches your interests</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="skill-actions">
+                                    <button class="view-details-btn" onclick="viewSkillDetails('{{ skill.user_id }}', '{{ skill.skill_name }}', '{{ skill.qualification }}', '{{ skill.years_of_experience }}', '{{ skill.description }}', '{{ skill.user_name }}', '{{ skill.profile_picture }}')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    <button class="connect-btn" onclick="connectWithUser('{{ skill.user_id }}')" data-user-id="{{ skill.user_id }}">
+                                        <i class="fas fa-user-plus"></i> Connect
+                                    </button>
+                                    <button class="message-btn" onclick="startConversation('{{ skill.user_id }}')">
+                                        <i class="fas fa-comment"></i> Message
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skill Details Modal -->
+                <div id="skillDetailsModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Skill Details</h2>
+                            <span class="close" onclick="hideSkillDetailsModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <div class="user-info-section">
+                                <img id="modalUserImage" src="" alt="User Image">
+                                <h3 id="modalUserName"></h3>
+                            </div>
+                            <div class="skill-details-section">
+                                <h4 id="modalSkillName"></h4>
+                                <div class="skill-meta">
+                                    <span id="modalQualification" class="qualification-badge"></span>
+                                    <span id="modalExperience"><i class="fas fa-clock"></i> <span></span> years experience</span>
+                                </div>
+                                <div class="skill-description-section">
+                                    <h5>Description</h5>
+                                    <p id="modalDescription"></p>
+                                </div>
+                            </div>
+                            <div class="modal-actions">
+                                <button class="connect-btn">
+                                    <i class="fas fa-user-plus"></i> Connect
+                                </button>
+                                <button class="message-btn">
+                                    <i class="fas fa-comment"></i> Message
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Details Modal -->
+                <div id="userDetailsModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>User Details</h2>
+                            <button class="close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="user-info-section">
+                                <img id="userDetailsImage" src="/static/images/default-avatar.png" alt="User Profile">
+                                <div>
+                                    <h3 id="userDetailsName">Loading...</h3>
+                                    <p id="userDetailsEmail">Loading...</p>
+                                    <p id="userDetailsLocation">Loading...</p>
+                                </div>
+                            </div>
+                            <div class="skill-details-section">
+                                <h4>Skills</h4>
+                                <div id="userDetailsSkills" class="skills-container">
+                                    <p>Loading skills...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="connect-btn">
+                                <i class="fas fa-user-plus"></i> Connect
+                            </button>
+                            <button class="message-btn">
+                                <i class="fas fa-envelope"></i> Message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% block scripts %}{% endblock %}
+
+    <style>
+    /* Dashboard Logo Styles */
+    .nav-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .dashboard-logo {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border-radius: 6px;
+    }
+
+    .nav-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--primary-color);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #ef4444;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        min-width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-link {
+        position: relative;
+    }
+
+    /* Featured Users Section */
+    .featured-users-section {
+        margin: 24px 0;
+    }
+
+    .featured-users-section h3 {
+        margin-bottom: 20px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        padding: 0 16px;
+    }
+
+    .featured-users-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+        padding: 0 16px;
+    }
+
+    /* Featured User Card Styles */
+    .featured-user-card {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
+    }
+
+    .featured-user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .featured-user-card .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 12px;
+        border: 2px solid #f3f4f6;
+        background-color: #f3f4f6;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .featured-user-card .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .featured-user-card .user-info {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .featured-user-card .user-info h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .featured-user-card .user-skills {
+        margin: 0;
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.4;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    /* Button Styles */
+    .connect-btn, .connected-btn, .view-details-btn, .message-btn {
+        width: 100%;
+        padding: 8px 16px;
+        border-radius: 16px;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .connect-btn {
+        background-color: #4f46e5;
+        color: white;
+        margin-bottom: 6px;
+    }
+
+    .connect-btn:hover {
+        background-color: #4338ca;
+        transform: translateY(-1px);
+    }
+
+    .connected-btn {
+        background-color: #e5e7eb;
+        color: #4b5563;
+        cursor: default;
+        margin-bottom: 6px;
+    }
+
+    .connected-btn i {
+        color: #10b981;
+    }
+
+    .view-details-btn {
+        background-color: #f3f4f6;
+        color: #4b5563;
+        margin-bottom: 6px;
+    }
+
+    .view-details-btn:hover {
+        background-color: #e5e7eb;
+        transform: translateY(-1px);
+    }
+
+    .message-btn {
+        background-color: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .message-btn:hover {
+        background-color: #e5e7eb;
+        transform: translateY(-1px);
+    }
+
+    /* Button Container */
+    .featured-user-card .user-info {
+        margin-top: 12px;
+    }
+
+    .featured-user-card .user-info button {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .featured-users-cards {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 0 12px;
+        }
+
+        .featured-user-card {
+            padding: 12px;
+        }
+
+        .featured-user-card .user-avatar {
+            width: 64px;
+            height: 64px;
+        }
+
+        .featured-user-card .user-info h4 {
+            font-size: 15px;
+        }
+
+        .featured-user-card .user-skills {
+            font-size: 12px;
+            max-width: 180px;
+        }
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+        display: flex;
+        opacity: 1;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: #fff;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        transform: scale(0.95);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .modal.show .modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #111827;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: color 0.2s ease;
+    }
+
+    .close-modal:hover {
+        color: #111827;
+    }
+
+    .user-info-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .user-info-section img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .user-info-section h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+        color: #111827;
+    }
+
+    .user-info-section p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .skill-details-section {
+        padding: 1.5rem;
+    }
+
+    .skill-details-section h4 {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+        color: #111827;
+    }
+
+    .skills-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .skill-tag {
+        background-color: #f3f4f6;
+        color: #374151;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .modal-actions button {
+        flex: 1;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .connect-btn {
+        background-color: #4f46e5;
+        color: white;
+        border: none;
+    }
+
+    .connect-btn:hover {
+        background-color: #4338ca;
+    }
+
+    .message-btn {
+        background-color: #f3f4f6;
+        color: #374151;
+        border: none;
+    }
+
+    .message-btn:hover {
+        background-color: #e5e7eb;
+    }
+
+    /* Notification Styles */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .notification.success {
+        background-color: #10B981;
+    }
+
+    .notification.error {
+        background-color: #EF4444;
+    }
+
+    .notification.info {
+        background-color: #3B82F6;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    </style>
+
+    <script>
+    // Function to update pending connections count
+    async function updatePendingConnectionsCount() {
+        try {
+            const response = await fetch('/api/connections');
+            const data = await response.json();
+            const count = data.pending_connections ? data.pending_connections.length : 0;
+            const badge = document.getElementById('pending-connections-count');
+            
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error updating pending connections count:', error);
+        }
+    }
+
+    // User Details Modal Functions
+    function showUserDetailsModal() {
+        const modal = document.getElementById('userDetailsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function hideUserDetailsModal() {
+        const modal = document.getElementById('userDetailsModal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300); // Match the transition duration
+
+            // Reset modal content to loading state
+            const userDetailsImage = document.getElementById('userDetailsImage');
+            const userDetailsName = document.getElementById('userDetailsName');
+            const userDetailsEmail = document.getElementById('userDetailsEmail');
+            const userDetailsLocation = document.getElementById('userDetailsLocation');
+            const skillsContainer = document.getElementById('userDetailsSkills');
+
+            if (userDetailsImage) userDetailsImage.src = '/static/images/default-avatar.png';
+            if (userDetailsName) userDetailsName.textContent = 'Loading...';
+            if (userDetailsEmail) userDetailsEmail.textContent = 'Loading...';
+            if (userDetailsLocation) userDetailsLocation.textContent = 'Loading...';
+            if (skillsContainer) skillsContainer.innerHTML = '<p>Loading skills...</p>';
+
+            // Reset button states
+            const connectBtn = modal.querySelector('.connect-btn');
+            const messageBtn = modal.querySelector('.message-btn');
+            if (connectBtn) {
+                connectBtn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                connectBtn.disabled = false;
+                connectBtn.onclick = null;
+            }
+            if (messageBtn) {
+                messageBtn.disabled = true;
+                messageBtn.onclick = null;
+            }
+        }
+    }
+
+    // Skill Details Modal Functions
+    function showSkillDetailsModal() {
+        const modal = document.getElementById('skillDetailsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function hideSkillDetailsModal() {
+        const modal = document.getElementById('skillDetailsModal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+        }
+    }
+
+    function viewSkillDetails(userId, skillName, qualification, yearsOfExperience, description, userName, profilePicture) {
+        console.log('Opening skill details for:', skillName); // Debug log
+        const modal = document.getElementById('skillDetailsModal');
+        if (!modal) {
+            console.error('Skill details modal not found');
+            return;
+        }
+        showSkillDetailsModal();
+
+        // Update modal content
+        const modalUserImage = document.getElementById('modalUserImage');
+        const modalUserName = document.getElementById('modalUserName');
+        const modalSkillName = document.getElementById('modalSkillName');
+        const modalQualification = document.getElementById('modalQualification');
+        const modalExperience = document.getElementById('modalExperience').querySelector('span');
+        const modalDescription = document.getElementById('modalDescription');
+
+        // Update profile picture
+        modalUserImage.src = profilePicture && profilePicture !== 'default-avatar.png' ? 
+            `/static/uploads/profiles/${profilePicture}` : 
+            '/static/images/default-avatar.png';
+
+        // Update user and skill details
+        modalUserName.textContent = userName;
+        modalSkillName.textContent = skillName;
+        modalQualification.textContent = qualification;
+        modalQualification.className = `qualification-badge ${qualification.toLowerCase()}`;
+        modalExperience.textContent = yearsOfExperience;
+        modalDescription.textContent = description;
+
+        // Update action buttons
+        const connectBtn = modal.querySelector('.connect-btn');
+        const messageBtn = modal.querySelector('.message-btn');
+
+        connectBtn.onclick = () => connectWithUser(userId);
+        messageBtn.onclick = () => {
+            hideSkillDetailsModal();
+            window.location.href = `/messages/${userId}`;
+        };
+    }
+
+    function connectWithUser(userId) {
+        fetch('/api/connections/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Connection request sent successfully!', 'success');
+                hideUserDetailsModal();
+                updatePendingConnectionsCount(); // Update the pending connections count
+            } else {
+                showNotification(data.error || 'Failed to send connection request.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while sending connection request.', 'error');
+        });
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // Initialize modals when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click event listeners to close buttons
+        document.querySelectorAll('.close-modal').forEach(button => {
+            button.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    if (modal.id === 'userDetailsModal') {
+                        hideUserDetailsModal();
+                    } else if (modal.id === 'skillDetailsModal') {
+                        hideSkillDetailsModal();
+                    } else {
+                        modal.classList.remove('show');
+                        document.body.style.overflow = '';
+                    }
+                }
+            });
+        });
+
+        // Add click event listener to close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                if (event.target.id === 'userDetailsModal') {
+                    hideUserDetailsModal();
+                } else if (event.target.id === 'skillDetailsModal') {
+                    hideSkillDetailsModal();
+                } else {
+                    event.target.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+        // Add escape key listener to close modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const userDetailsModal = document.getElementById('userDetailsModal');
+                const skillDetailsModal = document.getElementById('skillDetailsModal');
+                if (userDetailsModal && userDetailsModal.classList.contains('show')) {
+                    hideUserDetailsModal();
+                } else if (skillDetailsModal && skillDetailsModal.classList.contains('show')) {
+                    hideSkillDetailsModal();
+                } else {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.classList.remove('show');
+                        setTimeout(() => {
+                            modal.style.display = 'none';
+                        }, 300);
+                    });
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+        // Update pending connections count
+        updatePendingConnectionsCount();
+        // Update count every 30 seconds
+        setInterval(updatePendingConnectionsCount, 30000);
+    });
+
+    // Override the viewUserDetails function from dashboard.js
+    window.viewUserDetails = function(userId) {
+        console.log('Opening user details for user:', userId); // Debug log
+        const modal = document.getElementById('userDetailsModal'); // Get modal reference at the start
+        if (!modal) {
+            console.error('User details modal not found');
+            return;
+        }
+        showUserDetailsModal();
+
+        // Fetch user details
+        fetch(`/api/users/${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Raw API response:', data); // Debug log
+                if (data.success) {
+                    const user = data.user;
+                    const profile = data.profile;
+                    const skills = data.skills;
+
+                    console.log('User data:', user); // Debug log
+                    console.log('Profile data:', profile); // Debug log
+                    console.log('Skills data:', skills); // Debug log
+
+                    // Update modal content
+                    const userDetailsImage = document.getElementById('userDetailsImage');
+                    const userDetailsName = document.getElementById('userDetailsName');
+                    const userDetailsEmail = document.getElementById('userDetailsEmail');
+                    const userDetailsLocation = document.getElementById('userDetailsLocation');
+                    const skillsContainer = document.getElementById('userDetailsSkills');
+
+                    if (!userDetailsImage || !userDetailsName || !userDetailsEmail || !userDetailsLocation || !skillsContainer) {
+                        console.error('One or more modal elements not found'); // Debug log
+                        return;
+                    }
+
+                    // Update profile picture
+                    userDetailsImage.src = profile.profile_picture && profile.profile_picture !== 'default-avatar.png' ? 
+                        `/static/uploads/profiles/${profile.profile_picture}` : 
+                        '/static/images/default-avatar.png';
+
+                    // Update user details
+                    userDetailsName.textContent = user.name || 'Name not available';
+                    userDetailsEmail.textContent = user.email || 'Email not available';
+                    userDetailsLocation.textContent = profile.location || 'Location not specified';
+
+                    // Update skills
+                    if (skills && skills.length > 0) {
+                        skillsContainer.innerHTML = skills.map(skill => `
+                            <span class="skill-tag">${skill.skill_name}</span>
+                        `).join('');
+                    } else {
+                        skillsContainer.innerHTML = '<p>No skills listed</p>';
+                    }
+
+                    // Update action buttons
+                    const connectBtn = modal.querySelector('.connect-btn');
+                    const messageBtn = modal.querySelector('.message-btn');
+
+                    if (data.is_connected) {
+                        connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected';
+                        connectBtn.disabled = true;
+                        messageBtn.disabled = false;
+                        messageBtn.onclick = () => {
+                            hideUserDetailsModal();
+                            window.location.href = `/messages/${userId}`;
+                        };
+                    } else if (data.pending_request) {
+                        connectBtn.innerHTML = '<i class="fas fa-clock"></i> Request Pending';
+                        connectBtn.disabled = true;
+                        messageBtn.disabled = true;
+                    } else {
+                        connectBtn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                        connectBtn.disabled = false;
+                        connectBtn.onclick = () => connectWithUser(userId);
+                        messageBtn.disabled = true;
+                    }
+                } else {
+                    console.error('API returned error:', data.error); // Debug log
+                    showNotification(data.error || 'Failed to load user details.', 'error');
+                    hideUserDetailsModal();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user details:', error); // Debug log
+                showNotification('An error occurred while loading user details.', 'error');
+                hideUserDetailsModal();
+            });
+    }
+
+    function startConversation(userId) {
+        // Redirect to messages page with the conversation ID
+        window.location.href = `/messages?conversation_id=${userId}`;
+    }
+    </script>
+</body>
+</html>

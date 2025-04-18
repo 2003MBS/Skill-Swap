@@ -1,0 +1,130 @@
+{
+    "profiles": [
+        {
+            "user_id": 1,
+            "profile_picture": "1742647461_nayana.jpg",
+            "about": "I am a passionate developer interested in learning new technologies.\r\n",
+            "location": "Kollam",
+            "interests": [
+                "Machine Learning",
+                "UI/UX Design",
+                "web development"
+            ],
+            "education": [
+                {
+                    "id": "edu_1",
+                    "school": "KTU University",
+                    "degree": "Bachelor of Technology",
+                    "field": "Computer Science",
+                    "start_date": "2022-10",
+                    "end_date": "2026-06",
+                    "gpa": "",
+                    "description": "I am a 3rd year CSE Student at MESITAM."
+                }
+            ],
+            "work_experience": [
+                {
+                    "id": "work_1",
+                    "company": "Lumify",
+                    "position": "Software Engineer",
+                    "location": "Kollam",
+                    "start_date": "2024-10",
+                    "end_date": "",
+                    "description": "\nAs a co-founder of Lumify, I handle web design, development, and social media marketing to help businesses grow online.",
+                    "achievements": [
+                        "Co-founded Lumify, a digital marketing startup.",
+                        "Completed client projects in web design, development, social media marketing, and SEO.",
+                        "Expanded services by introducing branding solutions.",
+                        "Built a professional network with clients and industry professionals.",
+                        "Working on registering Lumify to expand its reach and impact."
+                    ]
+                },
+                {
+                    "id": "work_1742647061017",
+                    "company": "Zeone HUB",
+                    "position": "CEO",
+                    "location": "Kollam",
+                    "start_date": "2025-01",
+                    "end_date": "",
+                    "description": "CEO @ ZEONE HUB - IEDC MESITAM",
+                    "achievements": [
+                        "blah blah blah"
+                    ]
+                }
+            ],
+            "created_at": "2024-03-20T10:00:00Z",
+            "updated_at": "2025-03-22T18:33:33.927125"
+        },
+        {
+            "user_id": 2,
+            "profile_picture": "default-avatar.png",
+            "about": "UI/UX Designer with a passion for creating beautiful interfaces",
+            "location": "San Francisco, USA",
+            "interests": [
+                "UI/UX Design",
+                "Web Development",
+                "Mobile Development"
+            ],
+            "created_at": "2025-03-19T21:44:07.064222",
+            "updated_at": "2025-03-19T21:44:07.064233"
+        },
+        {
+            "user_id": "3",
+            "profile_picture": "default-avatar.png",
+            "about": "Machine Learning Engineer",
+            "location": "Boston, USA",
+            "interests": [
+                "Machine Learning",
+                "Data Science",
+                "Web Development"
+            ],
+            "created_at": "2025-03-20T06:14:05.316820",
+            "updated_at": "2025-03-20T06:14:05.316838"
+        },
+        {
+            "user_id": 3,
+            "profile_picture": "default-avatar.png",
+            "about": "",
+            "location": "",
+            "interests": [],
+            "created_at": "2025-03-20T06:14:14.417581",
+            "updated_at": "2025-03-20T06:14:14.417593"
+        },
+        {
+            "user_id": "4",
+            "profile_picture": "default-avatar.png",
+            "about": "",
+            "location": "",
+            "interests": [],
+            "created_at": "2025-03-22T18:35:15.881503",
+            "updated_at": "2025-03-22T18:35:15.881503"
+        },
+        {
+            "user_id": 4,
+            "profile_picture": "default-avatar.png",
+            "about": "",
+            "location": "",
+            "interests": [],
+            "created_at": "2025-03-22T18:35:28.843638",
+            "updated_at": "2025-03-22T18:35:28.843638"
+        },
+        {
+            "user_id": "5",
+            "profile_picture": "default-avatar.png",
+            "about": "",
+            "location": "",
+            "interests": [],
+            "created_at": "2025-03-22T19:54:36.473288",
+            "updated_at": "2025-03-22T19:54:36.473288"
+        },
+        {
+            "user_id": 5,
+            "profile_picture": "default-avatar.png",
+            "about": "",
+            "location": "",
+            "interests": [],
+            "created_at": "2025-03-22T19:54:59.851743",
+            "updated_at": "2025-03-22T19:54:59.851743"
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "user_skills": {
+        "1": [
+            {
+                "skill_id": "web_dev_1",
+                "skill_name": "Web Development",
+                "description": "Full-stack web development with modern frameworks",
+                "qualification": "Expert",
+                "years_of_experience": 5,
+                "certifications": ["AWS Certified Developer"],
+                "projects": ["E-commerce Platform", "Social Media App"],
+                "created_at": "2024-03-20T10:00:00Z",
+                "updated_at": "2024-03-20T10:00:00Z"
+            }
+        ],
+        "2": [
+            {
+                "skill_id": "ui_ux_1",
+                "skill_name": "UI/UX Design",
+                "description": "User interface and experience design",
+                "qualification": "Expert",
+                "years_of_experience": 4,
+                "certifications": ["Google UX Design Certificate"],
+                "projects": ["Mobile App Design", "Website Redesign"],
+                "created_at": "2024-03-20T10:00:00Z",
+                "updated_at": "2024-03-20T10:00:00Z"
+            }
+        ]
+    }
+}

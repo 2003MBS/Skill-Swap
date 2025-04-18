@@ -1,0 +1,33 @@
+[
+    {
+        "id": "1",
+        "user_id": "1",
+        "connected_user_id": "2",
+        "status": "connected",
+        "created_at": "2024-03-20T10:00:00Z"
+    },
+    {
+        "id": "2",
+        "user_id": "1",
+        "connected_user_id": "3",
+        "status": "connected",
+        "created_at": "2025-03-20T06:34:01.557076",
+        "accepted_at": "2025-03-21T20:32:36.331501"
+    },
+    {
+        "id": "1742648742",
+        "user_id": "4",
+        "connected_user_id": "1",
+        "status": "connected",
+        "created_at": "2025-03-22T18:35:42.776674",
+        "accepted_at": "2025-03-22T18:36:01.775839"
+    },
+    {
+        "id": "1742653509",
+        "user_id": "5",
+        "connected_user_id": "1",
+        "status": "connected",
+        "created_at": "2025-03-22T19:55:09.702528",
+        "accepted_at": "2025-03-22T19:55:53.004873"
+    }
+]

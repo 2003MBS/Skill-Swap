@@ -1,0 +1,37 @@
+[
+    {
+        "id": 1,
+        "fullname": "Nayana",
+        "email": "nayana@gmail.com",
+        "password": "10481dccca5c75af89091c73a661cf4fd49aefe3bcb0e5f29dde21ca657044c5",
+        "is_active": true
+    },
+    {
+        "id": 2,
+        "fullname": "Nasrin",
+        "email": "nasrin@gmail.com",
+        "password": "08a3e99ab82556d581b8cc5b83b618d858584c088208484347a5f6e8b47725b7",
+        "about": ""
+    },
+    {
+        "id": 3,
+        "fullname": "Ashna",
+        "email": "ashna@gmail.com",
+        "password": "0ba67304679ce078e2290e7aa0b53797f5777dbd845a26129e725ad2376cc962",
+        "about": ""
+    },
+    {
+        "id": 4,
+        "fullname": "Swathy B",
+        "email": "swathy@gamil.com",
+        "password": "588657af3c667b5b7351d0b4fcbae3dadc6cd8d93007c9b4d866288a1d79f2fe",
+        "about": ""
+    },
+    {
+        "id": 5,
+        "fullname": "Saidaly",
+        "email": "saidaly@gmail.com",
+        "password": "aeef14d7dde2af4ff85afee61dc09052da298ecac34b7b7916dc4a10158595fb",
+        "about": ""
+    }
+]

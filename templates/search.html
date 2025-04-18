@@ -1,0 +1,606 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Search - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="search-page">
+    <div class="content-section">
+        <h2>Search Users & Skills</h2>
+        
+        <!-- Search Form -->
+        <div class="search-form">
+            <div class="search-input-group">
+                <input type="text" id="searchInput" placeholder="Search by username, skill, or location...">
+                <button onclick="performSearch()" class="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="search-results">
+            <!-- Users Results -->
+            <div id="usersResults" class="results-section">
+                <h3>Users</h3>
+                <div class="users-grid" id="usersGrid">
+                    <!-- Users will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Skills Results -->
+            <div id="skillsResults" class="results-section">
+                <h3>Skills</h3>
+                <div class="skills-grid" id="skillsGrid">
+                    <!-- Skills will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.search-page {
+    padding: 2rem;
+    background: #f9fafb;
+    min-height: calc(100vh - 64px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.content-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-section h2 {
+    font-size: 2rem;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+}
+
+.search-form {
+    margin-bottom: 2rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-input-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.search-input-group input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.search-input-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-button {
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.search-button:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.search-button:active {
+    transform: translateY(0);
+}
+
+.results-section {
+    margin-bottom: 3rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.results-section h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+}
+
+.users-grid, .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.user-card {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.user-card:hover .user-avatar img {
+    border-color: #3b82f6;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.location {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.about {
+    color: #4b5563;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.user-skills {
+    margin: 1rem 0;
+}
+
+.user-skills h5 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #374151;
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    background: #f3f4f6;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.skill-tag:hover {
+    transform: translateY(-1px);
+}
+
+.skill-tag small {
+    color: #6b7280;
+    font-size: 0.75rem;
+}
+
+.skill-tag.expert {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.skill-tag.intermediate {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.skill-tag.beginner {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.skill-tag.expert:hover {
+    background: #bbf7d0;
+}
+
+.skill-tag.intermediate:hover {
+    background: #fde68a;
+}
+
+.skill-tag.beginner:hover {
+    background: #bfdbfe;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.user-actions button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.connect-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.connect-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.message-btn {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.message-btn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f4f6;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #9ca3af;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-page {
+        padding: 1rem;
+    }
+
+    .content-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .search-form {
+        padding: 1rem;
+    }
+
+    .search-input-group {
+        flex-direction: column;
+    }
+
+    .search-button {
+        width: 100%;
+    }
+
+    .users-grid, .skills-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .user-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .user-avatar {
+        margin-bottom: 1rem;
+    }
+
+    .user-skills {
+        justify-content: center;
+    }
+
+    .user-actions {
+        flex-direction: column;
+    }
+}
+
+.notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s ease-out;
+    z-index: 1000;
+}
+
+.notification.success {
+    background: #10b981;
+}
+
+.notification.error {
+    background: #ef4444;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+</style>
+
+<script>
+// Function to perform search
+async function performSearch() {
+    const searchQuery = document.getElementById('searchInput').value.trim();
+
+    if (!searchQuery) {
+        showNotification('Please enter a search term', 'error');
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('usersGrid').innerHTML = '<div class="loading-spinner"></div>';
+    document.getElementById('skillsGrid').innerHTML = '<div class="loading-spinner"></div>';
+
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const data = await response.json();
+
+        // Update users results
+        const usersGrid = document.getElementById('usersGrid');
+        if (data.users && data.users.length > 0) {
+            usersGrid.innerHTML = data.users.map(user => `
+                <div class="user-card">
+                    <div class="user-avatar">
+                        <img src="${getProfilePictureUrl(user.profile_picture)}" alt="${user.username}">
+                    </div>
+                    <div class="user-info">
+                        <h4>${user.username}</h4>
+                        <p class="location"><i class="fas fa-map-marker-alt"></i> ${user.location}</p>
+                        ${user.about ? `<p class="about">${user.about}</p>` : ''}
+                        ${user.skills.length > 0 ? `
+                            <div class="user-skills">
+                                <h5>Top Skills</h5>
+                                <div class="skill-tags">
+                                    ${user.skills.map(skill => `
+                                        <span class="skill-tag ${skill.qualification.toLowerCase()}">
+                                            ${skill.name}
+                                            <small>(${skill.years} years)</small>
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="user-actions">
+                            <button class="message-btn" onclick="startConversation('${user.id}')">
+                                <i class="fas fa-comment"></i>
+                                Message
+                            </button>
+                            ${user.is_connected ? `
+                                <button class="connected-btn" disabled>
+                                    <i class="fas fa-check"></i>
+                                    Connected
+                                </button>
+                            ` : `
+                                <button class="connect-btn" onclick="connectWithUser('${user.id}')">
+                                    <i class="fas fa-user-plus"></i>
+                                    Connect
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            usersGrid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-user-slash"></i>
+                    <p>No users found</p>
+                </div>
+            `;
+        }
+
+        // Update skills results
+        const skillsGrid = document.getElementById('skillsGrid');
+        if (data.skills && data.skills.length > 0) {
+            skillsGrid.innerHTML = data.skills.map(skill => `
+                <div class="user-card">
+                    <div class="user-avatar">
+                        <img src="${getProfilePictureUrl(skill.user.profile_picture)}" alt="${skill.user.username}">
+                    </div>
+                    <div class="user-info">
+                        <h4>${skill.skill_name}</h4>
+                        <p class="location"><i class="fas fa-map-marker-alt"></i> ${skill.user.location}</p>
+                        <p class="about">${skill.description}</p>
+                        <div class="user-skills">
+                            <h5>Experience</h5>
+                            <div class="skill-tags">
+                                <span class="skill-tag ${skill.qualification.toLowerCase()}">
+                                    ${skill.years_of_experience} years
+                                </span>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="message-btn" onclick="startConversation('${skill.user.id}')">
+                                <i class="fas fa-comment"></i>
+                                Message
+                            </button>
+                            <button class="connect-btn" onclick="connectWithUser('${skill.user.id}')">
+                                <i class="fas fa-user-plus"></i>
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            skillsGrid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <p>No skills found</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error performing search:', error);
+        showNotification('Failed to perform search', 'error');
+    }
+}
+
+// Function to get profile picture URL
+function getProfilePictureUrl(profilePicture) {
+    if (!profilePicture || profilePicture === 'default-avatar.png') {
+        return '/static/images/default-avatar.png';
+    }
+    return `/static/uploads/profiles/${profilePicture}`;
+}
+
+// Function to show notifications
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Function to connect with user
+async function connectWithUser(userId) {
+    try {
+        const response = await fetch('/api/connections/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Connection request sent successfully!', 'success');
+            performSearch(); // Refresh results
+        } else {
+            showNotification(data.message || 'Failed to send connection request', 'error');
+        }
+    } catch (error) {
+        console.error('Error sending connection request:', error);
+        showNotification('Failed to send connection request', 'error');
+    }
+}
+
+// Function to start conversation
+function startConversation(userId) {
+    window.location.href = `/messages?conversation_id=${userId}`;
+}
+
+// Add event listener for Enter key in search input
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+</script>
+{% endblock %} 

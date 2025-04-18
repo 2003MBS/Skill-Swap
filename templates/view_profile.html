@@ -1,0 +1,448 @@
+{% extends "dashboard.html" %}
+
+{% block title %}{{ user.fullname }}'s Profile - SkillSwap{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <img src="{{ url_for('static', filename='uploads/profiles/' + profile.profile_picture) if profile.profile_picture != 'default-avatar.png' else url_for('static', filename='images/default-avatar.png') }}" 
+                 alt="{{ user.fullname }}"
+                 onerror="this.src='{{ url_for('static', filename='images/default-avatar.png') }}'">
+        </div>
+        <div class="profile-details">
+            <h2>{{ user.fullname }}</h2>
+            <p class="profile-email">
+                <i class="fas fa-envelope"></i>
+                {{ user.email }}
+            </p>
+            <p class="profile-location">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ profile.location or 'Location not specified' }}
+            </p>
+            <div class="profile-actions">
+                {% if current_user_id != user.id|string %}
+                    {% if is_connected %}
+                        <button class="disconnect-btn" onclick="disconnectUser('{{ user.id }}')">
+                            <i class="fas fa-user-minus"></i> Disconnect
+                        </button>
+                    {% elif pending_request %}
+                        <button class="pending-btn" disabled>
+                            <i class="fa-clock fas"></i>
+                            Request Pending
+                        </button>
+                    {% else %}
+                        <button class="connect-btn" onclick="connectWithUser('{{ user.id }}')">
+                            <i class="fa-user-plus fas"></i>
+                            Connect
+                        </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="profile-content">
+        <!-- About Section -->
+        {% if profile.about %}
+        <div class="profile-section">
+            <h2><i class="fa-user-circle fas"></i> About</h2>
+            <p>{{ profile.about }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Skills Section -->
+        {% if skills %}
+        <div class="profile-section">
+            <h2><i class="fa-star fas"></i> Skills</h2>
+            <div class="skills-grid">
+                {% for skill in skills %}
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <h3>{{ skill.skill_name }}</h3>
+                        <span class="qualification-badge {{ skill.qualification.lower() }}">
+                            {{ skill.qualification }}
+                        </span>
+                    </div>
+                    {% if skill.description %}
+                    <p class="skill-description">{{ skill.description }}</p>
+                    {% endif %}
+                    <div class="skill-meta">
+                        <span><i class="fa-clock fas"></i> {{ skill.years_of_experience }} years</span>
+                        {% if skill.certifications %}
+                        <span><i class="fa-certificate fas"></i> {{ skill.certifications|length }} certifications</span>
+                        {% endif %}
+                    </div>
+                    {% if skill.certifications %}
+                    <div class="certifications">
+                        <h4>Certifications</h4>
+                        <ul>
+                            {% for cert in skill.certifications %}
+                            <li>{{ cert }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if skill.projects %}
+                    <div class="projects">
+                        <h4>Projects</h4>
+                        <ul>
+                            {% for project in skill.projects %}
+                            <li>{{ project }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Interests Section -->
+        {% if profile.interests %}
+        <div class="profile-section">
+            <h2><i class="fa-heart fas"></i> Interests</h2>
+            <div class="interests-grid">
+                {% for interest in profile.interests %}
+                <span class="interest-tag">{{ interest }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.profile-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.profile-header {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    padding: 2rem;
+    display: flex;
+    gap: 2rem;
+}
+
+.profile-avatar {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid white;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.profile-details h2 {
+    margin: 0;
+    font-size: 2rem;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.profile-email, .profile-location {
+    margin: 0;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.profile-actions {
+    margin-top: 1rem;
+}
+
+.connect-btn, .connected-btn, .pending-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.connect-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+}
+
+.connect-btn:hover {
+    background: #2563eb;
+}
+
+.connected-btn {
+    background: #e5e7eb;
+    color: #4b5563;
+    border: none;
+    cursor: default;
+}
+
+.connected-btn i {
+    color: #10b981;
+}
+
+.pending-btn {
+    background: #fef3c7;
+    color: #92400e;
+    border: none;
+    cursor: default;
+}
+
+.pending-btn i {
+    color: #92400e;
+}
+
+.profile-content {
+    display: grid;
+    gap: 2rem;
+}
+
+.profile-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.profile-section h2 {
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-section h2 i {
+    color: #3b82f6;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.skill-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.skill-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.qualification-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.qualification-badge.expert {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.qualification-badge.intermediate {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.qualification-badge.beginner {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.skill-description {
+    color: #4b5563;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.skill-meta {
+    display: flex;
+    gap: 1rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 1rem 0;
+}
+
+.skill-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.certifications, .projects {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.certifications h4, .projects h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    color: #374151;
+}
+
+.certifications ul, .projects ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.certifications li, .projects li {
+    margin-bottom: 0.25rem;
+}
+
+.interests-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.interest-tag {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.interest-tag::before {
+    content: "•";
+    color: #3b82f6;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.disconnect-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: none;
+    cursor: pointer;
+}
+
+.disconnect-btn:hover {
+    background-color: #fecaca;
+}
+</style>
+
+<script>
+async function connectWithUser(userId) {
+    try {
+        const response = await fetch('/api/connections/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Connection request sent successfully!', 'success');
+            // Reload the page to update the connection status
+            window.location.reload();
+        } else {
+            showNotification(data.message || 'Failed to send connection request', 'error');
+        }
+    } catch (error) {
+        console.error('Error sending connection request:', error);
+        showNotification('Failed to send connection request', 'error');
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type} show`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Function to disconnect from a user
+async function disconnectUser(userId) {
+    if (confirm('Are you sure you want to disconnect from this user?')) {
+        try {
+            const response = await fetch(`/api/connections/disconnect/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showNotification('Successfully disconnected', 'success');
+                window.location.reload(); // Reload the page to update the UI
+            } else {
+                showNotification(data.message || 'Failed to disconnect', 'error');
+            }
+        } catch (error) {
+            console.error('Error disconnecting:', error);
+            showNotification('Failed to disconnect', 'error');
+        }
+    }
+}
+</script>
+{% endblock %} 

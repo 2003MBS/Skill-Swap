@@ -1,0 +1,142 @@
+{
+    "messages": {
+        "1_2": [
+            {
+                "id": "1",
+                "sender_id": "1",
+                "content": "hello",
+                "created_at": "2025-03-21T17:07:47.038909",
+                "read": true
+            },
+            {
+                "id": "2",
+                "sender_id": "1",
+                "content": "wow",
+                "created_at": "2025-03-21T17:21:27.677954",
+                "read": true
+            },
+            {
+                "id": "3",
+                "sender_id": "2",
+                "content": "hei",
+                "created_at": "2025-03-21T17:22:06.499337",
+                "read": true
+            },
+            {
+                "id": "4",
+                "sender_id": "1",
+                "content": "Hello",
+                "created_at": "2025-03-21T17:31:41.152390",
+                "read": true
+            },
+            {
+                "id": "5",
+                "sender_id": "2",
+                "content": "hi",
+                "created_at": "2025-03-21T17:34:13.063832",
+                "read": true
+            },
+            {
+                "id": "6",
+                "sender_id": "1",
+                "content": "Why",
+                "created_at": "2025-03-21T17:34:38.577693",
+                "read": true
+            },
+            {
+                "id": "7",
+                "sender_id": "1",
+                "content": "Nthaan",
+                "created_at": "2025-03-21T17:34:56.283121",
+                "read": true
+            },
+            {
+                "id": "8",
+                "sender_id": "2",
+                "content": "onum bernilla",
+                "created_at": "2025-03-21T17:35:10.906401",
+                "read": true
+            },
+            {
+                "id": "10",
+                "sender_id": "2",
+                "content": "Schedule accepted: Web development ",
+                "created_at": "2025-03-22T00:59:12.332980",
+                "read": true
+            },
+            {
+                "id": "10",
+                "sender_id": "2",
+                "content": "Schedule accepted: Web development ",
+                "created_at": "2025-03-22T00:59:12.332980",
+                "read": true,
+                "type": "schedule_response",
+                "schedule_id": "5e0ab038-1e49-4816-92ff-e8cc13cc803e"
+            },
+            {
+                "id": "12",
+                "sender_id": "2",
+                "content": "Schedule denyed: web",
+                "created_at": "2025-03-22T04:09:09.652744",
+                "read": true
+            },
+            {
+                "id": "12",
+                "sender_id": "2",
+                "content": "Schedule denyed: web",
+                "created_at": "2025-03-22T04:09:09.652744",
+                "read": true,
+                "type": "schedule_response",
+                "schedule_id": "1a723c15-363c-4453-95ec-6cc18147d564"
+            },
+            {
+                "id": "13",
+                "sender_id": "2",
+                "content": "Schedule completed: Web development ",
+                "created_at": "2025-03-22T04:27:14.433369",
+                "read": true
+            },
+            {
+                "id": "13",
+                "sender_id": "2",
+                "content": "Schedule completed: Web development ",
+                "created_at": "2025-03-22T04:27:14.433369",
+                "read": true,
+                "type": "schedule_completed",
+                "schedule_id": "5e0ab038-1e49-4816-92ff-e8cc13cc803e"
+            }
+        ],
+        "1_3": [
+            {
+                "id": "1",
+                "sender_id": "1",
+                "content": "hello",
+                "created_at": "2025-03-21T17:55:35.432170",
+                "read": false
+            }
+        ],
+        "1_5": [
+            {
+                "id": "1",
+                "sender_id": "1",
+                "content": "grhthgth",
+                "created_at": "2025-03-22T14:26:01.149745",
+                "read": true
+            },
+            {
+                "id": "2",
+                "sender_id": "1",
+                "content": "dsfcds",
+                "created_at": "2025-03-22T14:31:13.981639",
+                "read": true
+            },
+            {
+                "id": "3",
+                "sender_id": "5",
+                "content": "wweff",
+                "created_at": "2025-03-22T14:31:51.442467",
+                "read": false
+            }
+        ]
+    }
+}

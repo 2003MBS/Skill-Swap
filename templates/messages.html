@@ -1,0 +1,1753 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<!-- Messages Content -->
+<div class="messages-container">
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('messages')">
+                <i class="fas fa-comments"></i> Messages
+            </button>
+            <button class="tab-btn" onclick="switchTab('schedules')">
+                <i class="fas fa-calendar"></i> Schedules
+            </button>
+        </div>
+        <div class="nav-actions">
+            <button class="add-schedule-btn" onclick="showAddScheduleModal()">
+                <i class="fas fa-plus"></i> Add Schedule
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Messages Section -->
+        <div id="messages-section" class="tab-content active">
+            <!-- Conversations List -->
+            <div class="conversations-list">
+                <div class="conversations">
+                    {% for conversation in conversations %}
+                    <div class="conversation-item {% if conversation.id == active_conversation.id %}active{% endif %}" 
+                         onclick="loadConversation('{{ conversation.id }}')">
+                        <div class="conversation-avatar">
+                            {% set other_participant = conversation.participants[0] if conversation.participants[0] != session.get('user_id') else conversation.participants[1] %}
+                            {% set user = users|selectattr('id', 'equalto', other_participant)|first %}
+                            {% if user %}
+                            {% set profile_image = url_for('static', filename='uploads/profiles/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default-avatar.png') %}
+                            <img src="{{ profile_image }}" 
+                                 alt="{{ user.fullname }}"
+                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                            {% if user.online %}
+                            <span class="online-status"></span>
+                            {% endif %}
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                                 alt="User"
+                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                            {% endif %}
+                        </div>
+                        <div class="conversation-info">
+                            <div class="conversation-header">
+                                <h3>{{ conversation.name }}</h3>
+                                <span class="time">{{ conversation.last_message_time|datetime }}</span>
+                            </div>
+                            <div class="conversation-preview">
+                                <p>{{ conversation.last_message }}</p>
+                                {% if conversation.unread_count > 0 %}
+                                <span class="unread-badge">{{ conversation.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                {% if active_conversation %}
+                <div class="chat-header">
+                    <div class="chat-user-info">
+                        {% set other_participant = active_conversation.participants[0] if active_conversation.participants[0] != session.get('user_id') else active_conversation.participants[1] %}
+                        {% set user = users|selectattr('id', 'equalto', other_participant)|first %}
+                        {% if user %}
+                        {% set profile_image = url_for('static', filename='uploads/profiles/' + user.profile_picture) if user.profile_picture else url_for('static', filename='images/default-avatar.png') %}
+                        <img src="{{ profile_image }}" 
+                             alt="{{ user.fullname }}"
+                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                        <div>
+                            <h3>{{ active_conversation.name }}</h3>
+                            <span class="status">{{ 'Online' if user.online else 'Offline' }}</span>
+                        </div>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/default-avatar.png') }}" 
+                             alt="User"
+                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-avatar.png') }}';">
+                        <div>
+                            <h3>{{ active_conversation.name }}</h3>
+                            <span class="status">Offline</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="chat-actions">
+                        <button class="action-btn schedule-btn" onclick="showChatScheduleModal()">
+                            <i class="fas fa-calendar-plus"></i> Schedule
+                        </button>
+                    </div>
+                </div>
+                <div class="messages-list" id="messagesList">
+                    {% for message in messages %}
+                    <div class="message {% if message.sender_id == session.get('user_id')|string %}sent{% else %}received{% endif %}">
+                        <div class="message-content">
+                            {% if message.type == 'schedule_request' %}
+                            <div class="schedule-request">
+                                <p>{{ message.content }}</p>
+                                {% if message.sender_id != session.get('user_id')|string %}
+                                <div class="schedule-actions">
+                                    <button class="accept-btn" onclick="respondToSchedule('{{ message.schedule_id }}', 'accept')">
+                                        <i class="fas fa-check"></i> Accept
+                                    </button>
+                                    <button class="deny-btn" onclick="respondToSchedule('{{ message.schedule_id }}', 'deny')">
+                                        <i class="fas fa-times"></i> Deny
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p>{{ message.content }}</p>
+                            {% endif %}
+                            <span class="message-time">{{ message.created_at|datetime }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="message-input">
+                    <form id="messageForm" onsubmit="sendMessage(event)">
+                        <input type="text" placeholder="Type a message..." id="messageInput">
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="no-conversation">
+                    <i class="fas fa-comments"></i>
+                    <h3>Select a conversation</h3>
+                    <p>Choose a conversation from the list to start messaging</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Schedules Section -->
+        <div id="schedules-section" class="tab-content">
+            <div class="schedules-container">
+                <div class="schedules-header">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search schedules..." id="scheduleSearch">
+                    </div>
+                </div>
+                <div class="schedules-list">
+                    <!-- Upcoming Schedules -->
+                    <div class="schedules-group">
+                        <h3>Upcoming Schedules</h3>
+                        {% if upcoming_schedules %}
+                            {% for schedule in upcoming_schedules %}
+                                {% if schedule.approval != 'denied' %}
+                                <div class="schedule-card">
+                                    <div class="schedule-header">
+                                        <h4>{{ schedule.title }}</h4>
+                                        <span class="schedule-status {{ schedule.status }}">{{ schedule.status }}</span>
+                                    </div>
+                                    <div class="schedule-details">
+                                        <p><i class="fas fa-calendar"></i> {{ schedule.date }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ schedule.time }}</p>
+                                        <p><i class="fas fa-user"></i> {{ schedule.participant }}</p>
+                                        {% if schedule.description %}
+                                            <p><i class="fas fa-info-circle"></i> {{ schedule.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="schedule-actions">
+                                        <button class="delete-schedule-btn" onclick="deleteSchedule('{{ schedule.id }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-schedules">No upcoming schedules</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Past Schedules -->
+                    <div class="schedules-group">
+                        <h3>Past Schedules</h3>
+                        {% if past_schedules %}
+                            {% for schedule in past_schedules %}
+                                {% if schedule.status != 'denied' %}
+                                <div class="schedule-card">
+                                    <div class="schedule-header">
+                                        <h4>{{ schedule.title }}</h4>
+                                        <span class="schedule-status {{ schedule.status }}">{{ schedule.status }}</span>
+                                    </div>
+                                    <div class="schedule-details">
+                                        <p><i class="fas fa-calendar"></i> {{ schedule.date }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ schedule.time }}</p>
+                                        <p><i class="fas fa-user"></i> {{ schedule.participant }}</p>
+                                        {% if schedule.description %}
+                                            <p><i class="fas fa-info-circle"></i> {{ schedule.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="schedule-actions">
+                                        <button class="delete-schedule-btn" onclick="deleteSchedule('{{ schedule.id }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-schedules">No past schedules</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div id="addScheduleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Schedule</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addScheduleForm" onsubmit="submitSchedule(event)">
+                <div class="form-group">
+                    <label for="scheduleTitle">Title</label>
+                    <input type="text" id="scheduleTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleDate">Date</label>
+                    <input type="date" id="scheduleDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleTime">Time</label>
+                    <input type="time" id="scheduleTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleParticipant">Participant</label>
+                    <select id="scheduleParticipant" required>
+                        <option value="">Select a participant</option>
+                        {% for user in connected_users %}
+                        <option value="{{ user.id }}">{{ user.fullname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleDescription">Description</label>
+                    <textarea id="scheduleDescription" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="submit-btn">Add Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Chat Schedule Modal -->
+<div id="chatScheduleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Schedule with {{ active_conversation.name }}</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="chatScheduleForm" onsubmit="submitChatSchedule(event)">
+                <div class="form-group">
+                    <label for="chatScheduleTitle">Title</label>
+                    <input type="text" id="chatScheduleTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="chatScheduleDate">Date</label>
+                    <input type="date" id="chatScheduleDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="chatScheduleTime">Time</label>
+                    <input type="time" id="chatScheduleTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="chatScheduleDescription">Description</label>
+                    <textarea id="chatScheduleDescription" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="submit-btn">Add Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Styles */
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    background: #ffffff;
+    border-radius: 16px;
+    margin: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Top Navigation */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background-color: #f1f5f9;
+    color: #334155;
+}
+
+.tab-btn.active {
+    background-color: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    width: 240px;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.add-schedule-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.add-schedule-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+/* Messages Section */
+.conversations-list {
+    width: 340px;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+.conversations-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.conversations-header h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.conversation-item {
+    display: flex;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.conversation-item:hover {
+    background-color: #f8fafc;
+}
+
+.conversation-item.active {
+    background-color: #eff6ff;
+}
+
+.conversation-avatar {
+    position: relative;
+    margin-right: 1rem;
+}
+
+.conversation-avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+.online-status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+.conversation-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.conversation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.conversation-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.time {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.conversation-preview {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conversation-preview p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.unread-badge {
+    background-color: #3b82f6;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+    font-weight: 500;
+}
+
+/* Chat Area */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+.chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chat-user-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+.chat-user-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.status {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.messages-list {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #f8fafc;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+}
+
+.message.sent {
+    align-self: flex-end;
+}
+
+.message.received {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.message.sent .message-content {
+    background-color: #3b82f6;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.received .message-content {
+    background-color: #ffffff;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.message-input {
+    padding: 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.message-input form {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.message-input input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.message-input input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.message-input button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.message-input button:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Schedules Section */
+.schedules-container {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background: #f8fafc;
+}
+
+.schedules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.schedules-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.schedules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.schedules-group {
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.schedule-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.schedule-card:last-child {
+    border-bottom: none;
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.schedule-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.schedule-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.schedule-status.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.schedule-status.confirmed {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.schedule-status.cancelled {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.schedule-details {
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.schedule-details p {
+    margin: 0.5rem 0;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.delete-schedule-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.delete-schedule-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.no-schedules {
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.close-modal:hover {
+    color: #1e293b;
+    background-color: #f1f5f9;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #334155;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+}
+
+.submit-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.notification.success {
+    background-color: #22c55e;
+}
+
+.notification.error {
+    background-color: #ef4444;
+}
+
+.notification.info {
+    background-color: #3b82f6;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .messages-container {
+        margin: 0;
+        border-radius: 0;
+        height: 100vh;
+    }
+
+    .conversations-list {
+        width: 100%;
+        display: none;
+    }
+
+    .conversations-list.active {
+        display: block;
+    }
+
+    .chat-area {
+        display: none;
+    }
+
+    .chat-area.active {
+        display: flex;
+    }
+
+    .schedule-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.no-conversation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2rem;
+    text-align: center;
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.no-conversation i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #94a3b8;
+    opacity: 0.8;
+}
+
+.no-conversation h3 {
+    font-size: 1.5rem;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.no-conversation p {
+    font-size: 1rem;
+    margin: 0;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+/* Schedule Request Styles */
+.schedule-request {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.schedule-request p {
+    margin: 0 0 0.75rem 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.accept-btn, .deny-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.accept-btn {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.accept-btn:hover {
+    background-color: #bbf7d0;
+}
+
+.deny-btn {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.deny-btn:hover {
+    background-color: #fecaca;
+}
+</style>
+
+<script>
+// Add this at the beginning of your script section
+let currentConversationId = null;
+let messageStream = null;
+
+// Function to send message
+function sendMessage(event) {
+    event.preventDefault();
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (message) {
+        // Add message to the UI immediately
+        const messagesList = document.getElementById('messagesList');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message sent';
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <p>${message}</p>
+                <span class="message-time">Just now</span>
+            </div>
+        `;
+        messagesList.appendChild(messageElement);
+        messagesList.scrollTop = messagesList.scrollHeight;
+
+        // Clear input
+        input.value = '';
+
+        // Send message to server
+        fetch('/api/messages/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                conversation_id: '{{ active_conversation.id if active_conversation else "" }}',
+                content: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Failed to send message:', data.error);
+                // Remove the message from UI if sending failed
+                messageElement.remove();
+                showNotification('Failed to send message. Please try again.', 'error');
+            } else {
+                // Update the message time with the server timestamp
+                const timeElement = messageElement.querySelector('.message-time');
+                if (timeElement && data.message.created_at) {
+                    timeElement.textContent = new Date(data.message.created_at).toLocaleTimeString();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            // Remove the message from UI if sending failed
+            messageElement.remove();
+            showNotification('An error occurred while sending the message.', 'error');
+        });
+    }
+}
+
+// Function to start listening for new messages
+function startMessageStream() {
+    if (messageStream) {
+        messageStream.close();
+    }
+
+    messageStream = new EventSource('/api/messages/stream');
+    
+    messageStream.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data && data.id) {  // Check if we received a valid message
+            // If the message is for the current conversation, add it to the chat
+            if (currentConversationId && 
+                (data.sender_id === currentConversationId || data.receiver_id === currentConversationId)) {
+                appendMessage(data);
+            }
+            
+            // Update the conversation list with the new message
+            updateConversationList(data);
+        }
+    };
+
+    messageStream.onerror = function(error) {
+        console.error('EventSource failed:', error);
+        messageStream.close();
+        // Attempt to reconnect after 5 seconds
+        setTimeout(startMessageStream, 5000);
+    };
+}
+
+// Function to update the conversation list with new messages
+function updateConversationList(message) {
+    const conversationKey = `${Math.min(message.sender_id, message.receiver_id)}_${Math.max(message.sender_id, message.receiver_id)}`;
+    const conversationElement = document.querySelector(`[data-conversation-id="${conversationKey}"]`);
+    
+    if (conversationElement) {
+        const lastMessageElement = conversationElement.querySelector('.last-message');
+        const timeElement = conversationElement.querySelector('.time');
+        
+        if (lastMessageElement) {
+            lastMessageElement.textContent = message.content;
+        }
+        if (timeElement) {
+            timeElement.textContent = formatMessageTime(message.created_at);
+        }
+        
+        // Update unread count if the message is not from the current user
+        if (message.sender_id !== currentUserId) {
+            const unreadBadge = conversationElement.querySelector('.unread-badge');
+            if (unreadBadge) {
+                const currentCount = parseInt(unreadBadge.textContent) || 0;
+                unreadBadge.textContent = currentCount + 1;
+                unreadBadge.style.display = 'block';
+            }
+        }
+    }
+}
+
+// Update the loadConversation function
+function loadConversation(conversationId) {
+    currentConversationId = conversationId;
+    // Mark messages as read before loading the conversation
+    fetch('/api/messages/mark-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            conversation_id: conversationId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update unread count in the UI
+            updateUnreadCount();
+            // Load the conversation
+            window.location.href = `/messages?conversation_id=${conversationId}`;
+        } else {
+            console.error('Failed to mark messages as read:', data.error);
+            showNotification('Failed to mark messages as read', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error marking messages as read:', error);
+        showNotification('An error occurred while marking messages as read', 'error');
+    });
+}
+
+// Function to format message time
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    // If less than 24 hours ago
+    if (diff < 24 * 60 * 60 * 1000) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    // If less than 7 days ago
+    else if (diff < 7 * 24 * 60 * 60 * 1000) {
+        return date.toLocaleDateString([], { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+    }
+    // Otherwise
+    else {
+        return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+}
+
+// Update unread messages count
+async function updateUnreadCount() {
+    try {
+        const response = await fetch('/api/messages/unread-count');
+        const data = await response.json();
+        const badge = document.getElementById('unread-messages-count');
+        
+        if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error updating unread count:', error);
+    }
+}
+
+// Start the message stream when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    startMessageStream();
+    updateUnreadCount();
+    // Update counts every 30 seconds
+    setInterval(updateUnreadCount, 30000);
+    
+    // Scroll to bottom of messages list
+    const messagesList = document.getElementById('messagesList');
+    if (messagesList) {
+        messagesList.scrollTop = messagesList.scrollHeight;
+    }
+});
+
+// User Details Modal Functions
+function showUserDetailsModal() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideUserDetailsModal() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+function viewUserDetails(userId) {
+    // Show loading state
+    const modal = document.getElementById('userDetailsModal');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    // Fetch user details
+    fetch(`/api/users/${userId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const user = data.user;
+                const profile = data.profile;
+                const skills = data.skills;
+
+                // Update modal content
+                document.getElementById('userDetailsImage').src = 
+                    profile.profile_picture ? 
+                    `/static/uploads/profiles/${profile.profile_picture}` : 
+                    '/static/images/default-avatar.png';
+                document.getElementById('userDetailsName').textContent = user.fullname;
+                document.getElementById('userDetailsEmail').textContent = user.email;
+                document.getElementById('userDetailsLocation').textContent = profile.location || 'Location not specified';
+
+                // Update skills
+                const skillsContainer = document.getElementById('userDetailsSkills');
+                if (skills && skills.length > 0) {
+                    skillsContainer.innerHTML = skills.map(skill => `
+                        <span class="skill-tag">${skill.skill_name}</span>
+                    `).join('');
+                } else {
+                    skillsContainer.innerHTML = '<p>No skills listed</p>';
+                }
+
+                // Update action buttons
+                const connectBtn = modal.querySelector('.connect-btn');
+                const messageBtn = modal.querySelector('.message-btn');
+
+                if (data.is_connected) {
+                    connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected';
+                    connectBtn.disabled = true;
+                    messageBtn.disabled = false;
+                    messageBtn.onclick = () => {
+                        hideUserDetailsModal();
+                        loadConversation(userId);
+                    };
+                } else if (data.pending_request) {
+                    connectBtn.innerHTML = '<i class="fas fa-clock"></i> Request Pending';
+                    connectBtn.disabled = true;
+                    messageBtn.disabled = true;
+                } else {
+                    connectBtn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                    connectBtn.disabled = false;
+                    connectBtn.onclick = () => connectWithUser(userId);
+                    messageBtn.disabled = true;
+                }
+            } else {
+                showNotification(data.error || 'Failed to load user details.', 'error');
+                hideUserDetailsModal();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while loading user details.', 'error');
+            hideUserDetailsModal();
+        });
+}
+
+function connectWithUser(userId) {
+    fetch('/api/connections/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: userId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Connection request sent successfully!', 'success');
+            hideUserDetailsModal();
+        } else {
+            showNotification(data.error || 'Failed to send connection request.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while sending connection request.', 'error');
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Initialize modals when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listeners to close buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+
+    // Add click event listener to close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Add escape key listener to close modals
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('show');
+            });
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Tab Switching
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(tabName)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        if (content.id === `${tabName}-section`) {
+            content.classList.add('active');
+        }
+    });
+
+    // Update nav-actions visibility
+    const navActions = document.querySelector('.nav-actions');
+    if (tabName === 'schedules') {
+        navActions.style.display = 'flex';
+    } else {
+        navActions.style.display = 'none';
+    }
+}
+
+// Initialize tab state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial tab state based on active_page
+    const activePage = '{{ active_page }}';
+    if (activePage === 'schedules') {
+        switchTab('schedules');
+    } else {
+        switchTab('messages');
+    }
+    
+    // ... rest of your existing DOMContentLoaded code ...
+});
+
+// Schedule Functions
+function showAddScheduleModal() {
+    const modal = document.getElementById('addScheduleModal');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideAddScheduleModal() {
+    const modal = document.getElementById('addScheduleModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+function submitSchedule(event) {
+    event.preventDefault();
+    
+    // Get form data
+    const formData = {
+        title: document.getElementById('scheduleTitle').value,
+        date: document.getElementById('scheduleDate').value,
+        time: document.getElementById('scheduleTime').value,
+        participant_id: document.getElementById('scheduleParticipant').value,
+        description: document.getElementById('scheduleDescription').value
+    };
+
+    // Validate form data
+    if (!formData.title || !formData.date || !formData.time || !formData.participant_id) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Send POST request to create schedule
+    fetch('/api/schedules', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Schedule added successfully!', 'success');
+            hideAddScheduleModal();
+            // Reset form
+            document.getElementById('addScheduleForm').reset();
+            // Refresh schedules list
+            location.reload();
+        } else {
+            showNotification(data.error || 'Failed to add schedule.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding schedule.', 'error');
+    });
+}
+
+function editSchedule(scheduleId) {
+    // Implement edit schedule functionality
+    console.log('Edit schedule:', scheduleId);
+}
+
+function deleteSchedule(scheduleId) {
+    if (confirm('Are you sure you want to delete this schedule?')) {
+        fetch(`/api/schedules/${scheduleId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Schedule deleted successfully!', 'success');
+                // Refresh schedules list
+                location.reload();
+            } else {
+                showNotification(data.error || 'Failed to delete schedule.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while deleting schedule.', 'error');
+        });
+    }
+}
+
+function viewSchedule(scheduleId) {
+    // Implement view schedule functionality
+    console.log('View schedule:', scheduleId);
+}
+
+// Add schedule search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const scheduleSearch = document.getElementById('scheduleSearch');
+    if (scheduleSearch) {
+        scheduleSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const scheduleCards = document.querySelectorAll('.schedule-card');
+            
+            scheduleCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                const participant = card.querySelector('.schedule-info p:last-child').textContent.toLowerCase();
+                const date = card.querySelector('.schedule-info p:first-child').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || 
+                    participant.includes(searchTerm) || 
+                    date.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+
+// Chat Schedule Functions
+function showChatScheduleModal() {
+    const modal = document.getElementById('chatScheduleModal');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideChatScheduleModal() {
+    const modal = document.getElementById('chatScheduleModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+function submitChatSchedule(event) {
+    event.preventDefault();
+    
+    // Get form data
+    const formData = {
+        title: document.getElementById('chatScheduleTitle').value,
+        date: document.getElementById('chatScheduleDate').value,
+        time: document.getElementById('chatScheduleTime').value,
+        participant_id: '{{ active_conversation.id if active_conversation else "" }}',
+        description: document.getElementById('chatScheduleDescription').value
+    };
+
+    // Validate form data
+    if (!formData.title || !formData.date || !formData.time || !formData.participant_id) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Send POST request to create schedule
+    fetch('/api/schedules', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Schedule added successfully!', 'success');
+            hideChatScheduleModal();
+            // Reset form
+            document.getElementById('chatScheduleForm').reset();
+            // Refresh schedules list
+            location.reload();
+        } else {
+            showNotification(data.error || 'Failed to add schedule.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding schedule.', 'error');
+    });
+}
+
+// Initialize modals when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add schedule modal close button
+    const addScheduleModal = document.getElementById('addScheduleModal');
+    if (addScheduleModal) {
+        const closeBtn = addScheduleModal.querySelector('.close-modal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', hideAddScheduleModal);
+        }
+    }
+
+    // Add chat schedule modal close button
+    const chatScheduleModal = document.getElementById('chatScheduleModal');
+    if (chatScheduleModal) {
+        const closeBtn = chatScheduleModal.querySelector('.close-modal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', hideChatScheduleModal);
+        }
+    }
+
+    // Add click event listener to close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Add escape key listener to close modals
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('show');
+            });
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Add this function to handle schedule responses
+function respondToSchedule(scheduleId, response) {
+    console.log('Responding to schedule:', scheduleId, response);
+    fetch(`/api/schedules/${scheduleId}/respond`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ response: response })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            showNotification(`Schedule ${response}ed successfully!`, 'success');
+            // Refresh the page to show updated schedule status
+            location.reload();
+        } else {
+            console.error('Error:', data.error);
+            showNotification(data.error || `Failed to ${response} schedule.`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while responding to schedule.', 'error');
+    });
+}
+</script>
+{% endblock %} 

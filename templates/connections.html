@@ -1,0 +1,553 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="connections-page">
+    <div class="content-section">
+        <h2>My Connections</h2>
+        
+        <!-- Pending Connections Section -->
+        <div class="connections-section pending-connections">
+            <h3>Pending Connections</h3>
+            <div id="pending-connections-container">
+                <div class="loading-spinner">
+                    <i class="fa-spin fa-spinner fas"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Users Section -->
+        <div class="connected-users connections-section">
+            <h3>Connected Users</h3>
+            <div id="connected-users-container">
+                <div class="loading-spinner">
+                    <i class="fa-spin fa-spinner fas"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.connections-page {
+    padding: 2rem;
+}
+
+.content-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-section h2 {
+    font-size: 2rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.connections-section {
+    margin-bottom: 3rem;
+}
+
+.connections-section h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+}
+
+/* Pending Connections Styles */
+.connections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.connection-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.connection-card.pending {
+    border-left: 4px solid #f59e0b;
+}
+
+.connection-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.connection-header img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.connection-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #111827;
+}
+
+.matching-skills {
+    margin-bottom: 1rem;
+}
+
+.matching-skills h4 {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+}
+
+.connection-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.connection-status {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Connected Users Styles */
+.connected-users {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.connected-user-card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.connected-user-card:last-child {
+    border-bottom: none;
+}
+
+.connected-user-card:hover {
+    background-color: #f8f9fa;
+}
+
+.connected-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 16px;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+}
+
+.connected-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.connected-user-info {
+    flex: 1;
+}
+
+.connected-user-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 4px;
+}
+
+.connected-user-skills {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-bottom: 8px;
+}
+
+.connected-user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.view-profile-btn, .message-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.view-profile-btn {
+    background-color: #f8f9fa;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+.view-profile-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.message-btn {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+}
+
+.message-btn:hover {
+    background-color: #4338ca;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+    color: #4f46e5;
+}
+
+.no-connections {
+    text-align: center;
+    padding: 32px;
+    color: #718096;
+}
+
+.no-connections i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #cbd5e0;
+}
+
+.no-connections p {
+    margin-bottom: 16px;
+}
+
+.explore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #4f46e5;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.explore-btn:hover {
+    background-color: #4338ca;
+}
+
+.notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: #10b981;
+    color: #fff;
+}
+
+.notification.error {
+    background: #ef4444;
+    color: #fff;
+}
+
+.disconnect-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: none;
+}
+
+.disconnect-btn:hover {
+    background-color: #fecaca;
+}
+</style>
+
+<script>
+// Get current user ID from session
+const currentUserId = "{{ session.user_id }}";
+
+// Function to get profile picture URL
+function getProfilePictureUrl(profilePicture) {
+    if (!profilePicture || profilePicture === 'default-avatar.png') {
+        return '/static/images/default-avatar.png';
+    }
+    return `/static/uploads/profiles/${profilePicture}`;
+}
+
+// Function to fetch and display connections
+async function loadConnections() {
+    try {
+        const response = await fetch('/api/connections');
+        const data = await response.json();
+        
+        // Update pending connections
+        const pendingContainer = document.getElementById('pending-connections-container');
+        if (data.pending_connections && data.pending_connections.length > 0) {
+            pendingContainer.innerHTML = `
+                <div class="connections-grid">
+                    ${data.pending_connections.map(conn => {
+                        const isSender = String(conn.user_id) === String(currentUserId);
+                        return `
+                        <div class="connection-card pending">
+                            <div class="connection-header">
+                                <img src="${getProfilePictureUrl(conn.user.profile_picture)}" alt="${conn.user.username}">
+                                <h3>${conn.user.username}</h3>
+                            </div>
+                            <div class="matching-skills">
+                                <h4>Matching Skills:</h4>
+                                <div class="skills-container">
+                                    ${conn.user.matching_skills.map(skill => `
+                                        <span class="skill-tag">${skill}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ${isSender ? `
+                                <div class="connection-status">
+                                    <span class="pending status-badge">Request Sent</span>
+                                </div>
+                            ` : `
+                                <div class="connection-actions">
+                                    <button class="accept-btn" onclick="acceptConnection('${conn.id}')">
+                                        <i class="fa-check fas"></i>
+                                        Accept
+                                    </button>
+                                    <button class="reject-btn" onclick="rejectConnection('${conn.id}')">
+                                        <i class="fa-times fas"></i>
+                                        Reject
+                                    </button>
+                                    <button class="view-profile-btn" onclick="viewProfile('${conn.user.id}')">
+                                        <i class="fa-user fas"></i>
+                                        View Profile
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+        } else {
+            pendingContainer.innerHTML = `
+                <div class="no-connections">
+                    <i class="fa-user-clock fas"></i>
+                    <p>No pending connections</p>
+                </div>
+            `;
+        }
+
+        // Update connected users
+        const connectedContainer = document.getElementById('connected-users-container');
+        if (data.connected_users && data.connected_users.length > 0) {
+            connectedContainer.innerHTML = `
+                <div class="connected-users-grid">
+                    ${data.connected_users.map(user => `
+                        <div class="connected-user-card">
+                            <div class="connected-user-avatar">
+                                <img src="${getProfilePictureUrl(user.profile_picture)}" alt="${user.username}">
+                            </div>
+                            <div class="connected-user-info">
+                                <div class="connected-user-name">${user.username}</div>
+                                <div class="connected-user-skills">${user.matching_skills.join(', ')}</div>
+                                <div class="connected-user-actions">
+                                    <button class="view-profile-btn" onclick="viewProfile('${user.id}')">
+                                        <i class="fas fa-eye"></i> View Profile
+                                    </button>
+                                    <button class="message-btn" onclick="startChat('${user.id}')">
+                                        <i class="fas fa-comment"></i> Message
+                                    </button>
+                                    <button class="disconnect-btn" onclick="disconnectUser('${user.id}')">
+                                        <i class="fas fa-user-minus"></i> Disconnect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            connectedContainer.innerHTML = `
+                <div class="no-connections">
+                    <i class="fas fa-users"></i>
+                    <p>You haven't connected with any users yet.</p>
+                    <a href="/dashboard" class="explore-btn">
+                        <i class="fas fa-compass"></i>
+                        Explore Users
+                    </a>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading connections:', error);
+        showNotification('Failed to load connections', 'error');
+    }
+}
+
+// Function to accept a connection request
+async function acceptConnection(connectionId) {
+    try {
+        console.log('Accepting connection:', connectionId);
+        console.log('Current user ID:', currentUserId);
+        
+        const response = await fetch(`/api/connections/accept/${connectionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (response.ok) {
+            showNotification('Connection request accepted', 'success');
+            loadConnections(); // Reload the connections list
+        } else {
+            console.error('Error response:', data);
+            showNotification(data.message || 'Failed to accept connection', 'error');
+        }
+    } catch (error) {
+        console.error('Error accepting connection:', error);
+        showNotification('Failed to accept connection', 'error');
+    }
+}
+
+// Function to reject a connection request
+async function rejectConnection(connectionId) {
+    try {
+        const response = await fetch(`/api/connections/reject/${connectionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Connection request rejected', 'success');
+            loadConnections(); // Reload the connections list
+            updatePendingConnectionsCount(); // Update the notification badge
+        } else {
+            showNotification(data.message || 'Failed to reject connection request', 'error');
+        }
+    } catch (error) {
+        console.error('Error rejecting connection:', error);
+        showNotification('Failed to reject connection request', 'error');
+    }
+}
+
+function viewProfile(userId) {
+    window.location.href = `/profile/${userId}`;
+}
+
+function startChat(userId) {
+    window.location.href = `/chat/${userId}`;
+}
+
+// Function to disconnect from a user
+async function disconnectUser(userId) {
+    if (confirm('Are you sure you want to disconnect from this user?')) {
+        try {
+            const response = await fetch(`/api/connections/disconnect/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showNotification('Successfully disconnected', 'success');
+                loadConnections(); // Reload the connections list
+            } else {
+                showNotification(data.message || 'Failed to disconnect', 'error');
+            }
+        } catch (error) {
+            console.error('Error disconnecting:', error);
+            showNotification('Failed to disconnect', 'error');
+        }
+    }
+}
+
+// Function to show notifications
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type} show`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Load connections when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadConnections();
+});
+</script>
+{% endblock %} 

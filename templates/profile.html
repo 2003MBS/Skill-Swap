@@ -1,0 +1,1808 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<style>
+/* Common styles for all section items */
+.education-item, .work-item, .skill-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Common action container styles */
+.education-actions, .work-actions, .skill-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Common button styles */
+.edit-btn,
+.remove-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.edit-btn {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.remove-btn {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.edit-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.remove-btn:hover {
+    background-color: #fecaca;
+}
+
+.edit-btn i,
+.remove-btn i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Add button styles */
+.add-education-btn,
+.add-work-btn,
+.add-skill-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    margin-top: 1rem;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-education-btn:hover,
+.add-work-btn:hover,
+.add-skill-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.add-education-btn i,
+.add-work-btn i,
+.add-skill-btn i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Dedicated Skills Section Styling */
+.skills-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.skills-section h3 {
+    font-size: 1.5rem;
+    color: #1f2937;
+    margin-bottom: 20px;
+}
+
+.skills-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr;
+}
+
+.skill-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.skill-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.skill-card-header h4 {
+    font-size: 1.1rem;
+    color: #111827;
+    margin: 0;
+}
+
+.skill-level-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.skill-level-badge.beginner {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.skill-level-badge.intermediate {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.skill-level-badge.advanced {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.skill-level-badge.expert {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.skill-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.skill-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.skill-info-item i {
+    width: 16px;
+    color: #6b7280;
+}
+
+.skill-description {
+    color: #4b5563;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    flex-grow: 1;
+}
+
+.skill-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    margin-top: auto;
+}
+
+.skill-edit-btn,
+.skill-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    min-width: 100px;
+}
+
+.skill-edit-btn {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.skill-edit-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.skill-delete-btn {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.skill-delete-btn:hover {
+    background-color: #fecaca;
+}
+
+.skill-edit-btn i,
+.skill-delete-btn i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.add-new-skill-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-new-skill-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.add-new-skill-btn i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: #111827;
+}
+
+.modal form {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 1.5rem;
+}
+
+.modal-buttons button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-buttons button[type="button"] {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.modal-buttons button[type="submit"] {
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+}
+
+.modal-buttons button[type="button"]:hover {
+    background-color: #e5e7eb;
+}
+
+.modal-buttons button[type="submit"]:hover {
+    background-color: #2563eb;
+}
+
+.modal-buttons button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Loading spinner styles */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1100;
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.notification.success {
+    background-color: #dcfce7;
+    color: #166534;
+    border-left: 4px solid #22c55e;
+}
+
+.notification.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+}
+</style>
+<div class="profile-section">
+    <div class="profile-header">
+        <div class="profile-cover"></div>
+        <div class="profile-info">
+            <div class="profile-avatar">
+                <img src="{{ url_for('static', filename='images/default-avatar.png') if profile.profile_picture == 'default-avatar.png' else url_for('static', filename='uploads/profiles/' + profile.profile_picture) }}" alt="{{ user.name }}" id="profile-image">
+                <form id="avatar-form" enctype="multipart/form-data" style="display: none;">
+                    <input type="file" name="profile_picture" id="profile-picture-input" accept="image/*">
+                </form>
+                <button class="edit-avatar-btn" onclick="document.getElementById('profile-picture-input').click()">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            <div class="profile-details">
+                <h2>{{ user.fullname }}</h2>
+                <p class="profile-email">
+                    <i class="fas fa-envelope"></i>
+                    {{ user.email }}
+                </p>
+                <p class="profile-location">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ profile.location or 'Location not specified' }}
+                </p>
+                <button class="edit-profile-btn" onclick="showEditProfileModal()">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <!-- About Me Section -->
+        <div class="profile-card">
+            <h3>About Me</h3>
+            <div class="view-mode">
+                <p>{{ profile.about or 'No information added yet.' }}</p>
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="profile-card">
+            <h3>Education</h3>
+            <div class="education-list">
+                {% for edu in profile.education %}
+                <div class="education-item">
+                    <div class="education-header">
+                        <h4>{{ edu.school }}</h4>
+                        <span class="date-range">{{ edu.start_date }} to {{ edu.end_date }}</span>
+                    </div>
+                    <div class="education-details">
+                        <div class="detail-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>{{ edu.degree }} in {{ edu.field }}</span>
+                        </div>
+                        {% if edu.gpa %}
+                        <div class="detail-item">
+                            <i class="fas fa-star"></i>
+                            <span>GPA: {{ edu.gpa }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="education-description">{{ edu.description }}</p>
+                    <div class="education-actions">
+                        <button class="edit-btn" onclick="editEducation('{{ edu.id }}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="remove-btn" onclick="removeEducation('{{ edu.id }}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                
+            </div>
+            <button class="add-education-btn" onclick="showAddEducationModal()">
+                <i class="fas fa-plus"></i> Add Education
+            </button>
+        </div>
+
+        <!-- Work Experience Section -->
+        <div class="profile-card">
+            <h3>Work Experience</h3>
+            <div class="work-list">
+                {% for work in profile.work_experience %}
+                <div class="work-item" data-work-id="{{ work.id }}">
+                    <div class="work-header">
+                        <h4>{{ work.position }}</h4>
+                        <span class="date-range">{{ work.start_date }} to {{ work.end_date }}</span>
+                    </div>
+                    <div class="work-details">
+                        <div class="detail-item">
+                            <i class="fas fa-building"></i>
+                            <span>{{ work.company }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ work.location }}</span>
+                        </div>
+                    </div>
+                    <p class="work-description">{{ work.description }}</p>
+                    {% if work.achievements %}
+                    <div class="achievements-section">
+                        <h5>Achievements</h5>
+                        <ul class="achievements-list">
+                            {% for achievement in work.achievements %}
+                            <li>{{ achievement }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="work-actions">
+                        <button class="edit-btn" onclick="editWork('{{ work.id }}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="remove-btn" onclick="removeWork('{{ work.id }}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="add-work-btn" onclick="showAddWorkModal()">
+                <i class="fas fa-plus"></i> Add Experience
+            </button>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="skills-section">
+            <h3>My Skills</h3>
+            <div class="skills-grid">
+                {% for skill in user_skills %}
+                <div class="skill-card" data-skill-id="{{ skill.skill_id }}">
+                    <div class="skill-card-header">
+                        <h4>{{ skill.skill_name }}</h4>
+                        <span class="skill-level-badge {{ skill.qualification.lower() }}">{{ skill.qualification }}</span>
+                    </div>
+                    <div class="skill-info-list">
+                        <div class="skill-info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ skill.years_of_experience }} years experience</span>
+                        </div>
+                        {% if skill.certifications %}
+                        <div class="skill-info-item">
+                            <i class="fas fa-certificate"></i>
+                            <span>{{ skill.certifications|length }} certifications</span>
+                        </div>
+                        {% endif %}
+                        {% if skill.projects %}
+                        <div class="skill-info-item">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>{{ skill.projects|length }} projects</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="skill-description">{{ skill.description }}</p>
+                    <div class="skill-card-actions">
+                        <button class="skill-edit-btn" onclick="editSkill('{{ skill.skill_id }}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="skill-delete-btn" onclick="removeSkill('{{ skill.skill_id }}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="add-new-skill-btn" onclick="showAddSkillModal()">
+                <i class="fas fa-plus"></i> Add New Skill
+            </button>
+        </div>
+
+        <!-- Interests Section -->
+        <div class="profile-card">
+            <h3>Interested In Learning</h3>
+            <div class="interests-container">
+                {% for interest in profile.interests %}
+                <div class="interest-tag">
+                    {{ interest }}
+                    <button class="remove-interest" data-interest="{{ interest }}">×</button>
+                </div>
+                {% endfor %}
+                <button class="add-interest-btn" onclick="showAddInterestModal()">
+                    <i class="fas fa-plus"></i> Add Interest
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal" id="editProfileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Profile</h3>
+            <button class="close-modal" onclick="hideEditProfileModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editProfileForm" onsubmit="saveProfile(event)">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="fullname" value="{{ user.fullname }}" required>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" value="{{ profile.location }}" placeholder="Your location">
+            </div>
+            <div class="form-group">
+                <label>About Me</label>
+                <textarea name="about" placeholder="Tell us about yourself...">{{ profile.about }}</textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideEditProfileModal()">Cancel</button>
+                <button type="submit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Skill Modal -->
+<div class="modal" id="addSkillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add New Skill</h3>
+            <button class="close-modal" onclick="hideAddSkillModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addSkillForm" onsubmit="addSkill(event)">
+            <div class="form-group">
+                <label>Skill Name</label>
+                <input type="text" name="skill_name" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Qualification Level</label>
+                <select name="qualification" required>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Years of Experience</label>
+                <input type="number" name="years_of_experience" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Certifications (comma-separated)</label>
+                <input type="text" name="certifications" placeholder="e.g., AWS Certified, Google Cloud Professional">
+            </div>
+            <div class="form-group">
+                <label>Projects (comma-separated)</label>
+                <input type="text" name="projects" placeholder="e.g., E-commerce Website, Mobile App">
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideAddSkillModal()">Cancel</button>
+                <button type="submit">Add Skill</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Skill Modal -->
+<div class="modal" id="editSkillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Skill</h3>
+            <button class="close-modal" onclick="hideEditSkillModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editSkillForm" onsubmit="updateSkill(event)">
+            <input type="hidden" name="skill_id" id="edit_skill_id">
+            <div class="form-group">
+                <label>Skill Name</label>
+                <input type="text" name="skill_name" id="edit_skill_name" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="edit_description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Qualification Level</label>
+                <select name="qualification" id="edit_qualification" required>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Years of Experience</label>
+                <input type="number" name="years_of_experience" id="edit_years_of_experience" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Certifications (comma-separated)</label>
+                <input type="text" name="certifications" id="edit_certifications" placeholder="e.g., AWS Certified, Google Cloud Professional">
+            </div>
+            <div class="form-group">
+                <label>Projects (comma-separated)</label>
+                <input type="text" name="projects" id="edit_projects" placeholder="e.g., E-commerce Website, Mobile App">
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideEditSkillModal()">Cancel</button>
+                <button type="submit">Update Skill</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Interest Modal -->
+<div class="modal" id="addInterestModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add New Interest</h3>
+            <button class="close-modal" onclick="hideAddInterestModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addInterestForm" onsubmit="addInterest(event)">
+            <div class="form-group">
+                <label>Interest</label>
+                <input type="text" id="interestInput" name="interest" placeholder="Enter your interest" required>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideAddInterestModal()">Cancel</button>
+                <button type="submit">Add Interest</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Education Modal -->
+<div class="modal" id="addEducationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Education</h3>
+            <button class="close-modal" onclick="hideAddEducationModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addEducationForm" onsubmit="addEducation(event)">
+            <div class="form-group">
+                <label>School/University</label>
+                <input type="text" name="school" required>
+            </div>
+            <div class="form-group">
+                <label>Degree</label>
+                <input type="text" name="degree" required>
+            </div>
+            <div class="form-group">
+                <label>Field of Study</label>
+                <input type="text" name="field" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="month" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="month" name="end_date" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>GPA (Optional)</label>
+                <input type="text" name="gpa" placeholder="e.g., 3.8">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" required></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideAddEducationModal()">Cancel</button>
+                <button type="submit">Add Education</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Work Experience Modal -->
+<div class="modal" id="addWorkModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Work Experience</h3>
+            <button class="close-modal" onclick="hideAddWorkModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addWorkForm" onsubmit="addWork(event)">
+            <div class="form-group">
+                <label>Company</label>
+                <input type="text" name="company" required>
+            </div>
+            <div class="form-group">
+                <label>Position (Optional)</label>
+                <input type="text" name="position" placeholder="Your role or position">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Start Date (Optional)</label>
+                    <input type="month" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label>End Date (Optional)</label>
+                    <input type="month" name="end_date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Achievements (one per line)</label>
+                <textarea name="achievements" placeholder="Enter each achievement on a new line"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideAddWorkModal()">Cancel</button>
+                <button type="submit">Add Experience</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Education Modal -->
+<div class="modal" id="editEducationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Education</h3>
+            <button class="close-modal" onclick="hideEditEducationModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editEducationForm" onsubmit="updateEducation(event)">
+            <input type="hidden" name="id" id="edit_edu_id">
+            <div class="form-group">
+                <label>School/University</label>
+                <input type="text" name="school" id="edit_school" required>
+            </div>
+            <div class="form-group">
+                <label>Degree</label>
+                <input type="text" name="degree" id="edit_degree" required>
+            </div>
+            <div class="form-group">
+                <label>Field of Study</label>
+                <input type="text" name="field" id="edit_field" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="month" name="start_date" id="edit_start_date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="month" name="end_date" id="edit_end_date" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>GPA (Optional)</label>
+                <input type="text" name="gpa" id="edit_gpa" placeholder="e.g., 3.8">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="edit_edu_description" required></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideEditEducationModal()">Cancel</button>
+                <button type="submit">Update Education</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Work Experience Modal -->
+<div class="modal" id="editWorkModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Work Experience</h3>
+            <button class="close-modal" onclick="hideEditWorkModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editWorkForm" onsubmit="updateWork(event)">
+            <input type="hidden" name="id" id="edit_work_id">
+            <div class="form-group">
+                <label>Company</label>
+                <input type="text" name="company" id="edit_company" required>
+            </div>
+            <div class="form-group">
+                <label>Position (Optional)</label>
+                <input type="text" name="position" id="edit_position" placeholder="Your role or position">
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" id="edit_location" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Start Date (Optional)</label>
+                    <input type="month" name="start_date" id="edit_work_start_date">
+                </div>
+                <div class="form-group">
+                    <label>End Date (Optional)</label>
+                    <input type="month" name="end_date" id="edit_work_end_date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="edit_work_description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Achievements (one per line)</label>
+                <textarea name="achievements" id="edit_achievements" placeholder="Enter each achievement on a new line"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="hideEditWorkModal()">Cancel</button>
+                <button type="submit">Update Experience</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Initialize modals when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all modals
+    const modals = document.querySelectorAll('.modal');
+    
+    // Add click event listeners to close buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        });
+    });
+
+    // Add click event listener to close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Add escape key listener to close modals
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            modals.forEach(modal => {
+                modal.classList.remove('show');
+            });
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Profile Picture Upload
+document.getElementById('profile-picture-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Please upload a valid image file (JPEG, PNG, or GIF).', 'error');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            showNotification('File size should be less than 5MB.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        
+        // Show loading state
+        const img = document.getElementById('profile-image');
+        const originalSrc = img.src;
+        img.style.opacity = '0.5';
+        
+        fetch('/api/profile/update', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                    img.style.opacity = '1';
+                    showNotification('Profile picture updated successfully!', 'success');
+                };
+                
+                reader.readAsDataURL(file);
+            } else {
+                img.style.opacity = '1';
+                showNotification('Failed to update profile picture.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            img.style.opacity = '1';
+            showNotification('An error occurred while updating profile picture.', 'error');
+        });
+    }
+});
+
+// Edit Profile Modal Functions
+function showEditProfileModal() {
+    console.log('Showing edit profile modal...');
+    const modal = document.getElementById('editProfileModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        console.log('Modal classes:', modal.classList);
+    } else {
+        console.error('Modal element not found!');
+    }
+}
+
+function hideEditProfileModal() {
+    console.log('Hiding edit profile modal...');
+    const modal = document.getElementById('editProfileModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+        console.log('Modal classes:', modal.classList);
+    }
+}
+
+function saveProfile(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    
+    fetch('/api/profile/update', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            showNotification('Failed to update profile.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating profile.', 'error');
+    });
+}
+
+// Interest Functions
+function showAddInterestModal() {
+    document.getElementById('addInterestModal').classList.add('show');
+}
+
+function hideAddInterestModal() {
+    document.getElementById('addInterestModal').classList.remove('show');
+}
+
+function addInterest(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const interest = formData.get('interest').trim();
+    
+    if (interest) {
+        fetch('/api/profile/interests/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ interest: interest })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                showNotification('Failed to add interest.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while adding interest.', 'error');
+        });
+        
+        hideAddInterestModal();
+        event.target.reset();
+    }
+}
+
+// Add click event listeners to remove interest buttons
+document.querySelectorAll('.remove-interest').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const interest = e.target.dataset.interest;
+        if (confirm('Are you sure you want to remove this interest?')) {
+            fetch('/api/profile/interests/remove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ interest: interest })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showNotification('Failed to remove interest.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while removing interest.', 'error');
+            });
+        }
+    });
+});
+
+// Updated Skill Management Functions
+function showAddSkillModal() {
+    const modal = document.getElementById('addSkillModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideAddSkillModal() {
+    const modal = document.getElementById('addSkillModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('addSkillForm').reset();
+}
+
+function showEditSkillModal() {
+    const modal = document.getElementById('editSkillModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideEditSkillModal() {
+    const modal = document.getElementById('editSkillModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+function editSkill(skillId) {
+    // Show loading state
+    const skillCard = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
+    if (skillCard) {
+        skillCard.style.opacity = '0.6';
+    }
+
+    fetch(`/api/skills/${skillId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const skill = data.skill;
+                // Populate the edit form
+                document.getElementById('edit_skill_id').value = skill.skill_id;
+                document.getElementById('edit_skill_name').value = skill.skill_name;
+                document.getElementById('edit_description').value = skill.description || '';
+                document.getElementById('edit_qualification').value = skill.qualification;
+                document.getElementById('edit_years_of_experience').value = skill.years_of_experience;
+                document.getElementById('edit_certifications').value = skill.certifications ? skill.certifications.join(', ') : '';
+                document.getElementById('edit_projects').value = skill.projects ? skill.projects.join(', ') : '';
+                
+                // Show the modal
+                showEditSkillModal();
+            } else {
+                showNotification('Failed to load skill details.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while loading skill details.', 'error');
+        })
+        .finally(() => {
+            // Reset loading state
+            if (skillCard) {
+                skillCard.style.opacity = '1';
+            }
+        });
+}
+
+function addSkill(event) {
+    event.preventDefault();
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Disable submit button and show loading state
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    }
+
+    const formData = new FormData(form);
+    const skillData = {
+        skill_name: formData.get('skill_name'),
+        description: formData.get('description'),
+        qualification: formData.get('qualification'),
+        years_of_experience: parseInt(formData.get('years_of_experience')),
+        certifications: formData.get('certifications').split(',').map(c => c.trim()).filter(c => c),
+        projects: formData.get('projects').split(',').map(p => p.trim()).filter(p => p)
+    };
+
+    fetch('/api/skills/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(skillData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Skill added successfully!', 'success');
+            hideAddSkillModal();
+            window.location.reload();
+        } else {
+            showNotification('Failed to add skill.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding skill.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Add Skill';
+        }
+    });
+}
+
+function updateSkill(event) {
+    event.preventDefault();
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Disable submit button and show loading state
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
+    const formData = new FormData(form);
+    const skillData = {
+        skill_id: formData.get('skill_id'),
+        skill_name: formData.get('skill_name'),
+        description: formData.get('description'),
+        qualification: formData.get('qualification'),
+        years_of_experience: parseInt(formData.get('years_of_experience')),
+        certifications: formData.get('certifications').split(',').map(c => c.trim()).filter(c => c),
+        projects: formData.get('projects').split(',').map(p => p.trim()).filter(p => p)
+    };
+
+    fetch('/api/skills/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(skillData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Skill updated successfully!', 'success');
+            hideEditSkillModal();
+            window.location.reload();
+        } else {
+            showNotification('Failed to update skill.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating skill.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Update Skill';
+        }
+    });
+}
+
+function removeSkill(skillId) {
+    if (confirm('Are you sure you want to remove this skill?')) {
+        // Show loading state
+        const skillCard = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
+        if (skillCard) {
+            skillCard.style.opacity = '0.6';
+        }
+
+        fetch(`/api/skills/remove/${skillId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Skill removed successfully!', 'success');
+                if (skillCard) {
+                    skillCard.style.opacity = '0';
+                    setTimeout(() => {
+                        skillCard.remove();
+                        // If no skills left, reload to show empty state
+                        if (document.querySelectorAll('.skill-card').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                showNotification('Failed to remove skill.', 'error');
+                if (skillCard) {
+                    skillCard.style.opacity = '1';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while removing skill.', 'error');
+            if (skillCard) {
+                skillCard.style.opacity = '1';
+            }
+        });
+    }
+}
+
+// Education Functions
+function showAddEducationModal() {
+    document.getElementById('addEducationModal').classList.add('show');
+}
+
+function hideAddEducationModal() {
+    document.getElementById('addEducationModal').classList.remove('show');
+}
+
+function showEditEducationModal() {
+    document.getElementById('editEducationModal').classList.add('show');
+}
+
+function hideEditEducationModal() {
+    document.getElementById('editEducationModal').classList.remove('show');
+}
+
+function addEducation(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const educationData = {
+        id: 'edu_' + Date.now(),
+        school: formData.get('school'),
+        degree: formData.get('degree'),
+        field: formData.get('field'),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        gpa: formData.get('gpa'),
+        description: formData.get('description')
+    };
+
+    fetch('/api/profile/education/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(educationData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            showNotification('Failed to add education.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding education.', 'error');
+    });
+}
+
+function editEducation(educationId) {
+    fetch(`/api/profile/education/${educationId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const education = data.education;
+                document.getElementById('edit_edu_id').value = education.id;
+                document.getElementById('edit_school').value = education.school;
+                document.getElementById('edit_degree').value = education.degree;
+                document.getElementById('edit_field').value = education.field;
+                document.getElementById('edit_start_date').value = education.start_date;
+                document.getElementById('edit_end_date').value = education.end_date;
+                document.getElementById('edit_gpa').value = education.gpa || '';
+                document.getElementById('edit_edu_description').value = education.description || '';
+                showEditEducationModal();
+            } else {
+                showNotification('Failed to load education details.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while loading education details.', 'error');
+        });
+}
+
+function updateEducation(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const educationData = {
+        id: formData.get('id'),
+        school: formData.get('school'),
+        degree: formData.get('degree'),
+        field: formData.get('field'),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        gpa: formData.get('gpa'),
+        description: formData.get('description')
+    };
+
+    fetch('/api/profile/education/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(educationData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            showNotification('Failed to update education.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating education.', 'error');
+    });
+}
+
+function removeEducation(educationId) {
+    if (confirm('Are you sure you want to remove this education entry?')) {
+        fetch(`/api/profile/education/remove/${educationId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                showNotification('Failed to remove education.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while removing education.', 'error');
+        });
+    }
+}
+
+// Updated Work Experience Functions
+function showAddWorkModal() {
+    const modal = document.getElementById('addWorkModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideAddWorkModal() {
+    const modal = document.getElementById('addWorkModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('addWorkForm').reset();
+}
+
+function showEditWorkModal() {
+    const modal = document.getElementById('editWorkModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideEditWorkModal() {
+    const modal = document.getElementById('editWorkModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+function addWork(event) {
+    event.preventDefault();
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Disable submit button and show loading state
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    }
+
+    const formData = new FormData(form);
+    const workData = {
+        id: 'work_' + Date.now(),
+        company: formData.get('company'),
+        position: formData.get('position'),
+        location: formData.get('location'),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        description: formData.get('description'),
+        achievements: formData.get('achievements').split('\n').filter(a => a.trim())
+    };
+
+    fetch('/api/profile/work/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Work experience added successfully!', 'success');
+            hideAddWorkModal();
+            window.location.reload();
+        } else {
+            showNotification('Failed to add work experience.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding work experience.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Add Experience';
+        }
+    });
+}
+
+function editWork(workId) {
+    // Show loading state
+    const workItem = document.querySelector(`.work-item[data-work-id="${workId}"]`);
+    if (workItem) {
+        workItem.style.opacity = '0.6';
+    }
+
+    fetch(`/api/profile/work/${workId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const work = data.work;
+                // Populate the edit form
+                document.getElementById('edit_work_id').value = work.id;
+                document.getElementById('edit_company').value = work.company;
+                document.getElementById('edit_position').value = work.position;
+                document.getElementById('edit_location').value = work.location;
+                document.getElementById('edit_work_start_date').value = work.start_date;
+                document.getElementById('edit_work_end_date').value = work.end_date;
+                document.getElementById('edit_work_description').value = work.description;
+                document.getElementById('edit_achievements').value = work.achievements.join('\n');
+                
+                // Show the modal
+                showEditWorkModal();
+            } else {
+                showNotification('Failed to load work experience details.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while loading work experience details.', 'error');
+        })
+        .finally(() => {
+            // Reset loading state
+            if (workItem) {
+                workItem.style.opacity = '1';
+            }
+        });
+}
+
+function updateWork(event) {
+    event.preventDefault();
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const workId = form.querySelector('#edit_work_id').value;
+    
+    // Disable submit button and show loading state
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
+    const formData = new FormData(form);
+    const workData = {
+        id: workId,
+        company: formData.get('company'),
+        position: formData.get('position'),
+        location: formData.get('location'),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        description: formData.get('description'),
+        achievements: formData.get('achievements').split('\n').filter(a => a.trim())
+    };
+
+    // Show loading state on the work item
+    const workItem = document.querySelector(`.work-item[data-work-id="${workId}"]`);
+    if (workItem) {
+        workItem.style.opacity = '0.6';
+    }
+
+    fetch('/api/profile/work/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Work experience updated successfully!', 'success');
+            hideEditWorkModal();
+            window.location.reload();
+        } else {
+            showNotification('Failed to update work experience.', 'error');
+            if (workItem) {
+                workItem.style.opacity = '1';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating work experience.', 'error');
+        if (workItem) {
+            workItem.style.opacity = '1';
+        }
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Update Experience';
+        }
+    });
+}
+
+function removeWork(workId) {
+    if (confirm('Are you sure you want to remove this work experience?')) {
+        // Show loading state
+        const workItem = document.querySelector(`.work-item[data-work-id="${workId}"]`);
+        if (workItem) {
+            workItem.style.opacity = '0.6';
+        }
+
+        fetch(`/api/profile/work/remove/${workId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Work experience removed successfully!', 'success');
+                if (workItem) {
+                    workItem.style.opacity = '0';
+                    setTimeout(() => {
+                        workItem.remove();
+                        // If no work experiences left, reload to show empty state
+                        if (document.querySelectorAll('.work-item').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                showNotification('Failed to remove work experience.', 'error');
+                if (workItem) {
+                    workItem.style.opacity = '1';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while removing work experience.', 'error');
+            if (workItem) {
+                workItem.style.opacity = '1';
+            }
+        });
+    }
+}
+
+// Notification System
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Trigger reflow
+    notification.offsetHeight;
+    
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+</script>
+
+{% endblock %} 
